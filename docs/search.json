@@ -1,0 +1,114 @@
+[
+  {
+    "objectID": "resume.html",
+    "href": "resume.html",
+    "title": "My Resume",
+    "section": "",
+    "text": "Download PDF file."
+  },
+  {
+    "objectID": "posts/host-your-quarto-website-on-github/index.html",
+    "href": "posts/host-your-quarto-website-on-github/index.html",
+    "title": "Host Your Quarto Website on GitHub",
+    "section": "",
+    "text": "This tutorial assumes you already have a rendered Quarto website on your local machine and want to host it publicly with GitHub Pages."
+  },
+  {
+    "objectID": "posts/host-your-quarto-website-on-github/index.html#step-1-get-git-and-gcm",
+    "href": "posts/host-your-quarto-website-on-github/index.html#step-1-get-git-and-gcm",
+    "title": "Host Your Quarto Website on GitHub",
+    "section": "Step 1: Get Git and GCM",
+    "text": "Step 1: Get Git and GCM\nGit is a free, open source, distributed version control system. In practice, it helps you track changes, back up your work on a remote service like GitHub, and collaborate with others.\nFirst, check whether Git is already installed.\n\nOn Windows, look for Git Bash in the Start menu.\nOn macOS or Linux, run git --version in the terminal.\n\nIf a version number appears, Git is installed.\nEven if Git is already installed, it is still worth installing Git Credential Manager (GCM) to make GitHub authentication much smoother.\n\nWindows\nGo to https://git-scm.com and download Git for Windows. This bundle includes Git, Git Bash, and Git Credential Manager.\n\n\nmacOS\nThe easiest route is Homebrew.\nCheck whether Homebrew is installed:\nbrew --version\nIf it is not installed, visit https://brew.sh, copy the installation command from the homepage, and run it in your terminal. It will look similar to this:\n/bin/bash -c \"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\"\nFollow the prompts in the terminal. You may need to enter your computer password or accept terms. When typing a password in the terminal, the cursor usually will not move, but your input is still being received.\nThen install Git:\nbrew install git\nIf you get an error like zsh: command not found: brew, add Homebrew to your PATH and try again:\nexport PATH=\"/opt/homebrew/bin:$PATH\" &gt;&gt; ~/.zshrc\nNext, install Git Credential Manager:\nbrew install git-credential-manager"
+  },
+  {
+    "objectID": "posts/host-your-quarto-website-on-github/index.html#step-2-introduce-yourself-to-git",
+    "href": "posts/host-your-quarto-website-on-github/index.html#step-2-introduce-yourself-to-git",
+    "title": "Host Your Quarto Website on GitHub",
+    "section": "Step 2: Introduce Yourself to Git",
+    "text": "Step 2: Introduce Yourself to Git\nGit records an author name and email with each commit, so set that up once globally:\ngit config --global user.name \"Your Name\"\ngit config --global user.email \"your_email@example.com\"\nYou can confirm your settings with:\ngit config --global --list\nIt is also helpful to ensure new repositories use main as the default branch name:\ngit config --global init.defaultBranch main"
+  },
+  {
+    "objectID": "posts/host-your-quarto-website-on-github/index.html#step-3-turn-git-on-for-your-website",
+    "href": "posts/host-your-quarto-website-on-github/index.html#step-3-turn-git-on-for-your-website",
+    "title": "Host Your Quarto Website on GitHub",
+    "section": "Step 3: Turn Git On for Your Website",
+    "text": "Step 3: Turn Git On for Your Website\nNavigate to your website directory in the terminal, then initialize Git:\ncd path/to/quarto_website\ngit init\nThis creates a hidden .git folder in your project.\nIf you want to view hidden files:\n\nOn macOS Finder, press Cmd+Shift+..\nOn Windows, search for “show hidden files” from the taskbar.\nIn RStudio, use the Files pane gear icon and enable Show Hidden Files.\nIn VS Code, update the files.exclude setting."
+  },
+  {
+    "objectID": "posts/host-your-quarto-website-on-github/index.html#step-4-save-your-website",
+    "href": "posts/host-your-quarto-website-on-github/index.html#step-4-save-your-website",
+    "title": "Host Your Quarto Website on GitHub",
+    "section": "Step 4: Save Your Website",
+    "text": "Step 4: Save Your Website\nGit starts tracking the directory after git init, but your project history begins only when you make commits.\nA commit is a snapshot of your project. The usual flow is:\n\nStage files with git add.\nCreate the snapshot with git commit.\n\nTo stage all changed files and commit them:\ngit add .\ngit commit -m \"Initial website commit\"\nYou can also do this through RStudio or VS Code if you prefer a graphical interface."
+  },
+  {
+    "objectID": "posts/host-your-quarto-website-on-github/index.html#step-5-create-a-github-account",
+    "href": "posts/host-your-quarto-website-on-github/index.html#step-5-create-a-github-account",
+    "title": "Host Your Quarto Website on GitHub",
+    "section": "Step 5: Create a GitHub Account",
+    "text": "Step 5: Create a GitHub Account\nGo to https://github.com and create a free account.\nChoose a username that is short, professional, lowercase, and likely to age well."
+  },
+  {
+    "objectID": "posts/host-your-quarto-website-on-github/index.html#step-6-create-a-github-repository",
+    "href": "posts/host-your-quarto-website-on-github/index.html#step-6-create-a-github-repository",
+    "title": "Host Your Quarto Website on GitHub",
+    "section": "Step 6: Create a GitHub Repository",
+    "text": "Step 6: Create a GitHub Repository\nFrom GitHub:\n\nOpen the Repositories tab.\nClick the green New button.\n\nIf you name the repository your_username.github.io, your site URL can be:\nhttps://your_username.github.io\nIf you name it something else like quarto_website, the URL will usually be:\nhttps://your_username.github.io/quarto_website\nAfter creating the repository, GitHub will show a short set of commands under the heading for pushing an existing repository from the command line."
+  },
+  {
+    "objectID": "posts/host-your-quarto-website-on-github/index.html#step-7-connect-your-local-directory-to-github",
+    "href": "posts/host-your-quarto-website-on-github/index.html#step-7-connect-your-local-directory-to-github",
+    "title": "Host Your Quarto Website on GitHub",
+    "section": "Step 7: Connect Your Local Directory to GitHub",
+    "text": "Step 7: Connect Your Local Directory to GitHub\nRun the GitHub-provided commands in your local project directory:\ngit remote add origin https://github.com/username/repo-name.git\ngit branch -M main\ngit push -u origin main\nWhat these commands do:\n\ngit remote add origin ... connects your local repository to GitHub.\ngit branch -M main renames the branch to main.\ngit push -u origin main uploads your local commits.\n\nAfter pushing, refresh the GitHub repository page and you should see your website files there."
+  },
+  {
+    "objectID": "posts/host-your-quarto-website-on-github/index.html#step-8-tell-github-your-repo-is-a-website",
+    "href": "posts/host-your-quarto-website-on-github/index.html#step-8-tell-github-your-repo-is-a-website",
+    "title": "Host Your Quarto Website on GitHub",
+    "section": "Step 8: Tell GitHub Your Repo Is a Website",
+    "text": "Step 8: Tell GitHub Your Repo Is a Website\nIn your GitHub repository:\n\nClick Settings.\nIn the left menu, click Pages.\nUnder Branch, set:\n\n\nBranch: main\nFolder: docs\n\nGive GitHub a minute or two to deploy the site. Once deployment finishes, GitHub will indicate that the site is live."
+  },
+  {
+    "objectID": "posts/host-your-quarto-website-on-github/index.html#step-9-confirm-your-public-website",
+    "href": "posts/host-your-quarto-website-on-github/index.html#step-9-confirm-your-public-website",
+    "title": "Host Your Quarto Website on GitHub",
+    "section": "Step 9: Confirm Your Public Website",
+    "text": "Step 9: Confirm Your Public Website\nOpen your site URL in a browser or use the Visit site button from the GitHub Pages settings screen."
+  },
+  {
+    "objectID": "posts/host-your-quarto-website-on-github/index.html#workflow-to-update-your-website",
+    "href": "posts/host-your-quarto-website-on-github/index.html#workflow-to-update-your-website",
+    "title": "Host Your Quarto Website on GitHub",
+    "section": "Workflow to Update Your Website",
+    "text": "Workflow to Update Your Website\nAs you continue working on the site, a practical workflow looks like this:\n\nEdit files regularly, especially .qmd files and images.\nRender locally often to preview your changes.\nCommit your work periodically.\nPush to GitHub less frequently, usually when you want to publish updates.\n\nOne common mistake is editing a .qmd file, committing it, and pushing it without rendering the website first. In that case, the source file changed but the generated HTML in docs/ did not, so the live website will not reflect your update.\nRender locally before you commit and push so the published site matches your latest edits."
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Ben Kleiman",
+    "section": "",
+    "text": "Welcome to my page!"
+  },
+  {
+    "objectID": "about.html",
+    "href": "about.html",
+    "title": "About",
+    "section": "",
+    "text": "About this site"
+  },
+  {
+    "objectID": "posts.html",
+    "href": "posts.html",
+    "title": "Posts",
+    "section": "",
+    "text": "Host Your Quarto Website on GitHub\n\n\nA tutorial for pushing a local Git repo to GitHub and deploying the website with GitHub Pages\n\n\n\n\n\n\n\n\nAug 1, 2024\n\n\n\n\n\nNo matching items"
+  },
+  {
+    "objectID": "projects.html",
+    "href": "projects.html",
+    "title": "My Projects",
+    "section": "",
+    "text": "No matching items"
+  }
+]

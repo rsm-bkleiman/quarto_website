@@ -1,0 +1,15 @@
+[
+  {
+    "listing": "/posts.html",
+    "items": [
+      "/posts/host-your-quarto-website-on-github/index.html"
+    ]
+  },
+  {
+    "listing": "/projects.html",
+    "items": [
+      "/projects/project1/index.html",
+      "/projects/project2/index.html"
+    ]
+  }
+]

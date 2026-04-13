@@ -1,0 +1,13 @@
+---
+title: "Ben Kleiman"
+about:
+  image: "files/profile_pic.jpg"
+  template: jolla
+  links:
+    - icon: envelope
+      href: mailto:bkleiman@ucsd.edu
+    - icon: linkedin
+      href: https://www.linkedin.com/in/benjamin-kleiman-416ab3250/
+---
+
+Welcome to my page!
