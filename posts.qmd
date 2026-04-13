@@ -1,7 +1,9 @@
 ---
 title: "Posts"
-listing:
-  contents: posts
-  type: default
-  sort: "date desc"
 ---
+
+:::{.page-intro}
+Writing, notes, and short reflections will live here over time.
+:::
+
+No posts yet.

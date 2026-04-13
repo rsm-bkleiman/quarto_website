@@ -2,4 +2,17 @@
 title: "About"
 ---
 
-About this site
+:::{.page-intro}
+This website is a simple portfolio for sharing my academic background, project work, and professional materials.
+:::
+
+## What this site includes
+
+- A homepage with a quick overview of who I am and what I am working on.
+- A projects section for coursework, portfolio pieces, and technical work.
+- A resume page with a downloadable PDF.
+- A posts section for future writing and reflections.
+
+## Current focus
+
+I am especially interested in using data to support clear decision-making, practical business insight, and concise communication.

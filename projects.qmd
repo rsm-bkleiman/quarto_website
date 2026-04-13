@@ -1,6 +1,27 @@
 ---
-title: "My Projects"
-listing:
-  contents: projects
-  type: grid
+title: "Projects"
 ---
+
+:::{.page-intro}
+A growing collection of classwork, analyses, and portfolio projects.
+:::
+
+:::{.quick-grid}
+:::{.quick-card}
+### Analytics Work
+
+Course projects, data analyses, and dashboards will appear here as they are finalized.
+:::
+
+:::{.quick-card}
+### Business Applications
+
+This section will highlight work that connects data analysis to business questions and decisions.
+:::
+
+:::{.quick-card}
+### More Soon
+
+I am still building out this portfolio, so more detailed project writeups are on the way.
+:::
+:::
