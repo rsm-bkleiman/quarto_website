@@ -7,11 +7,95 @@
     "text": "Download PDF file."
   },
   {
-    "objectID": "posts.html",
-    "href": "posts.html",
-    "title": "Posts",
+    "objectID": "posts/hw1-ab-testing-frequentist-inference/index.html",
+    "href": "posts/hw1-ab-testing-frequentist-inference/index.html",
+    "title": "A/B Testing a Call to Action",
     "section": "",
-    "text": "Writing, notes, and short reflections will live here over time.\n\nNo posts yet."
+    "text": "Suppose I am trying to grow a newsletter from my website homepage. One of the simplest levers I can change is the wording of the call to action that asks visitors to subscribe. In this post I compare two versions of that message: CTA A says “Sign up for our newsletter here!” while CTA B says “Stay up to date by signing up!”\nTo decide which version performs better, I can run an A/B test. In an A/B test, visitors are randomly assigned to one of two versions of a page element, and I compare outcomes across the two groups. Random assignment matters because it makes the groups comparable, so any systematic difference in sign-up behavior can be attributed to the CTA rather than to differences in the visitors themselves.\nThis setting gives a clean way to walk through several core ideas from frequentist statistics. Using simulated data, I will connect the A/B test to Bernoulli outcomes, the law of large numbers, bootstrap standard errors, the central limit theorem, hypothesis testing, regression, and the dangers of peeking at results too early."
+  },
+  {
+    "objectID": "posts/hw1-ab-testing-frequentist-inference/index.html#introduction",
+    "href": "posts/hw1-ab-testing-frequentist-inference/index.html#introduction",
+    "title": "A/B Testing a Call to Action",
+    "section": "",
+    "text": "Suppose I am trying to grow a newsletter from my website homepage. One of the simplest levers I can change is the wording of the call to action that asks visitors to subscribe. In this post I compare two versions of that message: CTA A says “Sign up for our newsletter here!” while CTA B says “Stay up to date by signing up!”\nTo decide which version performs better, I can run an A/B test. In an A/B test, visitors are randomly assigned to one of two versions of a page element, and I compare outcomes across the two groups. Random assignment matters because it makes the groups comparable, so any systematic difference in sign-up behavior can be attributed to the CTA rather than to differences in the visitors themselves.\nThis setting gives a clean way to walk through several core ideas from frequentist statistics. Using simulated data, I will connect the A/B test to Bernoulli outcomes, the law of large numbers, bootstrap standard errors, the central limit theorem, hypothesis testing, regression, and the dangers of peeking at results too early."
+  },
+  {
+    "objectID": "posts/hw1-ab-testing-frequentist-inference/index.html#the-ab-test-as-a-statistical-problem",
+    "href": "posts/hw1-ab-testing-frequentist-inference/index.html#the-ab-test-as-a-statistical-problem",
+    "title": "A/B Testing a Call to Action",
+    "section": "The A/B Test as a Statistical Problem",
+    "text": "The A/B Test as a Statistical Problem\nEach visitor either signs up for the newsletter or does not. That means each observation can be modeled as a Bernoulli random variable taking the value 1 for a sign-up and 0 otherwise.\nIf the CTA wording affects behavior, then the sign-up probability may differ by group. Let \\(\\pi_A\\) denote the sign-up probability for visitors who see CTA A and let \\(\\pi_B\\) denote the sign-up probability for visitors who see CTA B. The quantity I care about is the treatment effect\n\\[\n\\theta = \\pi_A - \\pi_B,\n\\]\nwhich is the difference in sign-up rates across the two versions.\nIn practice I do not observe \\(\\pi_A\\) or \\(\\pi_B\\) directly, so I estimate them with sample proportions. Because the data are binary, the sample mean is exactly the sample proportion. That gives the estimator\n\\[\n\\hat\\theta = \\bar{X}_A - \\bar{X}_B = \\hat\\pi_A - \\hat\\pi_B.\n\\]\nIf \\(\\hat\\theta\\) is positive, CTA A appears to outperform CTA B. If it is negative, CTA B looks better."
+  },
+  {
+    "objectID": "posts/hw1-ab-testing-frequentist-inference/index.html#simulating-data",
+    "href": "posts/hw1-ab-testing-frequentist-inference/index.html#simulating-data",
+    "title": "A/B Testing a Call to Action",
+    "section": "Simulating Data",
+    "text": "Simulating Data\nIn a real experiment, the true conversion rates would be unknown. For a simulation exercise, though, it is helpful to set them ourselves so we can study how well our statistical tools recover the truth.\nHere I assume that CTA A has a sign-up rate of \\(\\pi_A = 0.22\\) and CTA B has a sign-up rate of \\(\\pi_B = 0.18\\). The true difference is therefore\n\\[\n\\theta = 0.22 - 0.18 = 0.04.\n\\]\nI simulate 1,000 visitors in each group.\n\nn_A = 1000\nn_B = 1000\npi_A = 0.22\npi_B = 0.18\ntrue_theta = pi_A - pi_B\n\ncta_a = rng.binomial(1, pi_A, size=n_A)\ncta_b = rng.binomial(1, pi_B, size=n_B)\n\ntheta_hat = cta_a.mean() - cta_b.mean()\nsummary_df = pd.DataFrame({\n    'Group': ['CTA A', 'CTA B', 'Difference'],\n    'Sign-up Rate': [cta_a.mean(), cta_b.mean(), theta_hat],\n    'True Value': [pi_A, pi_B, true_theta]\n})\ndisplay(summary_df)\n\n\n\n\n\n\n\n\nGroup\nSign-up Rate\nTrue Value\n\n\n\n\n0\nCTA A\n0.2100\n0.2200\n\n\n1\nCTA B\n0.1800\n0.1800\n\n\n2\nDifference\n0.0300\n0.0400\n\n\n\n\n\n\n\nThe realized sample rates will not match the truth exactly, because sampling variation is unavoidable. Still, with 1,000 observations per group we expect the estimates to be reasonably close."
+  },
+  {
+    "objectID": "posts/hw1-ab-testing-frequentist-inference/index.html#the-law-of-large-numbers",
+    "href": "posts/hw1-ab-testing-frequentist-inference/index.html#the-law-of-large-numbers",
+    "title": "A/B Testing a Call to Action",
+    "section": "The Law of Large Numbers",
+    "text": "The Law of Large Numbers\nThe Law of Large Numbers says that as the sample size grows, the sample mean converges to the population mean. In this context, that principle gives us a reason to trust \\(\\hat\\theta = \\bar{X}_A - \\bar{X}_B\\): when the experiment gets large, the difference in sample averages should settle down near the true difference in sign-up probabilities.\nTo visualize that idea, I compute the element-wise differences between the simulated CTA A and CTA B outcomes and then track the cumulative average of those differences.\n\n\n\n\n\n\n\n\n\nAt the beginning of the plot, the running average jumps around quite a bit because each additional observation has a large effect on the estimate. As more observations accumulate, the path becomes much more stable and starts hovering around the true difference of 0.04. That is exactly the LLN in action: large samples smooth out random noise."
+  },
+  {
+    "objectID": "posts/hw1-ab-testing-frequentist-inference/index.html#bootstrap-standard-errors",
+    "href": "posts/hw1-ab-testing-frequentist-inference/index.html#bootstrap-standard-errors",
+    "title": "A/B Testing a Call to Action",
+    "section": "Bootstrap Standard Errors",
+    "text": "Bootstrap Standard Errors\nA point estimate is only part of the story. In an A/B test I also want to know how precise that estimate is. The bootstrap helps answer that question by repeatedly resampling from the observed data and recalculating the statistic of interest.\nThe bootstrap works by treating the observed sample as a stand-in for the population. I repeatedly sample with replacement from the CTA A observations and from the CTA B observations, compute a new difference in sample means for each resample, and then measure the spread of those bootstrapped estimates. The standard deviation of the bootstrap distribution is the bootstrap standard error.\n\nB = 1000\nboot_thetas = np.empty(B)\n\nfor b in range(B):\n    a_star = rng.choice(cta_a, size=n_A, replace=True)\n    b_star = rng.choice(cta_b, size=n_B, replace=True)\n    boot_thetas[b] = a_star.mean() - b_star.mean()\n\nboot_se = boot_thetas.std(ddof=1)\npi_hat_A = cta_a.mean()\npi_hat_B = cta_b.mean()\nanalytic_se = np.sqrt(pi_hat_A * (1 - pi_hat_A) / n_A + pi_hat_B * (1 - pi_hat_B) / n_B)\nci_lower = theta_hat - 1.96 * boot_se\nci_upper = theta_hat + 1.96 * boot_se\n\nse_df = pd.DataFrame({\n    'Quantity': ['Bootstrap SE', 'Analytical SE', '95% CI Lower', '95% CI Upper'],\n    'Value': [boot_se, analytic_se, ci_lower, ci_upper]\n})\ndisplay(se_df)\n\n\n\n\n\n\n\n\nQuantity\nValue\n\n\n\n\n0\nBootstrap SE\n0.0183\n\n\n1\nAnalytical SE\n0.0177\n\n\n2\n95% CI Lower\n-0.0059\n\n\n3\n95% CI Upper\n0.0659\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nThe bootstrap and analytical standard errors should be very close, and that is what I find here. The similarity is reassuring because it suggests that both approaches are capturing the same underlying uncertainty in the estimator. Using the bootstrap standard error, the 95% confidence interval gives a plausible range of values for the true treatment effect. Interpreted in plain language, it is the range of treatment effects that are most consistent with the data under repeated-sampling logic."
+  },
+  {
+    "objectID": "posts/hw1-ab-testing-frequentist-inference/index.html#the-central-limit-theorem",
+    "href": "posts/hw1-ab-testing-frequentist-inference/index.html#the-central-limit-theorem",
+    "title": "A/B Testing a Call to Action",
+    "section": "The Central Limit Theorem",
+    "text": "The Central Limit Theorem\nThe Central Limit Theorem says that even when the underlying data are not Normally distributed, the sampling distribution of a sample mean becomes approximately Normal as the sample size grows. Since \\(\\hat\\theta\\) is a difference in sample means, the same logic applies here.\nTo illustrate that idea, I simulate the estimator 1,000 times at four different sample sizes: 25, 50, 100, and 500 observations per group.\n\n\n\n\n\n\n\n\n\nAt small sample sizes, the histograms look rougher and less stable. As the sample size increases, the distribution of \\(\\hat\\theta\\) becomes smoother, more symmetric, and more bell-shaped. That is the CLT showing up visually. This result matters because it gives us a practical Normal approximation for inference in large-sample A/B tests."
+  },
+  {
+    "objectID": "posts/hw1-ab-testing-frequentist-inference/index.html#hypothesis-testing",
+    "href": "posts/hw1-ab-testing-frequentist-inference/index.html#hypothesis-testing",
+    "title": "A/B Testing a Call to Action",
+    "section": "Hypothesis Testing",
+    "text": "Hypothesis Testing\nA hypothesis test asks whether the evidence in the sample is strong enough to reject a benchmark claim. Here the null hypothesis is\n\\[\nH_0: \\theta = 0,\n\\]\nmeaning the two CTAs have the same sign-up rate. The alternative is\n\\[\nH_1: \\theta \\neq 0,\n\\]\nmeaning the CTAs perform differently.\nThe key step is standardization. If I subtract the null value of zero from my estimate and divide by its standard error, I get the test statistic\n\\[\nz = \\frac{\\hat\\theta - 0}{SE(\\hat\\theta)}.\n\\]\nThe logic is straightforward. By the CLT, \\(\\hat\\theta\\) is approximately Normal in large samples. Under the null, that Normal distribution is centered at zero. Dividing by the standard deviation turns it into an approximate standard Normal random variable, which means I know the null reference distribution and can calculate a p-value.\nThis procedure is often casually called a t-test, but in this Bernoulli setting it is more accurate to think of it as a large-sample z-test. The classical t-distribution result comes from Normally distributed data with an estimated variance. Here the data are binary, not Normal, and the justification comes from the CLT instead.\n\nz_stat = theta_hat / analytic_se\np_value = 2 * (1 - stats.norm.cdf(abs(z_stat)))\n\nht_df = pd.DataFrame({\n    'Statistic': ['Estimate', 'Standard Error', 'z statistic', 'p-value'],\n    'Value': [theta_hat, analytic_se, z_stat, p_value]\n})\ndisplay(ht_df)\n\n\n\n\n\n\n\n\nStatistic\nValue\n\n\n\n\n0\nEstimate\n0.0300\n\n\n1\nStandard Error\n0.0177\n\n\n2\nz statistic\n1.6943\n\n\n3\np-value\n0.0902\n\n\n\n\n\n\n\nThe p-value tells me how surprising my observed estimate would be if the null hypothesis of no CTA effect were actually true. A small p-value gives evidence against \\(H_0\\). In this simulation, the estimate is positive and the p-value indicates whether that difference is large relative to its uncertainty."
+  },
+  {
+    "objectID": "posts/hw1-ab-testing-frequentist-inference/index.html#the-t-test-as-a-regression",
+    "href": "posts/hw1-ab-testing-frequentist-inference/index.html#the-t-test-as-a-regression",
+    "title": "A/B Testing a Call to Action",
+    "section": "The T-Test as a Regression",
+    "text": "The T-Test as a Regression\nThe same A/B test can be written as a simple linear regression. Stack the data into one column of outcomes \\(Y_i\\) and one treatment indicator \\(D_i\\), where \\(D_i = 1\\) for CTA A and \\(D_i = 0\\) for CTA B. Then estimate\n\\[\nY_i = \\beta_0 + \\beta_1 D_i + \\varepsilon_i.\n\\]\nThis regression has a very direct interpretation. The intercept \\(\\beta_0\\) is the average outcome for group B, which estimates \\(\\pi_B\\). The fitted value for treated observations is \\(\\beta_0 + \\beta_1\\), which estimates \\(\\pi_A\\). That means \\(\\beta_1\\) is exactly the treatment effect \\(\\pi_A - \\pi_B = \\theta\\).\n\nab_df = pd.DataFrame({\n    'signup': np.concatenate([cta_a, cta_b]),\n    'cta_a': np.concatenate([np.ones(n_A, dtype=int), np.zeros(n_B, dtype=int)])\n})\n\nX = sm.add_constant(ab_df['cta_a'])\nols_model = sm.OLS(ab_df['signup'], X).fit()\nreg_df = pd.DataFrame({\n    'Metric': ['Coefficient on CTA A', 'Standard Error', 't Statistic', 'p-value'],\n    'Value': [\n        ols_model.params['cta_a'],\n        ols_model.bse['cta_a'],\n        ols_model.tvalues['cta_a'],\n        ols_model.pvalues['cta_a']\n    ]\n})\ndisplay(reg_df)\n\n\n\n\n\n\n\n\nMetric\nValue\n\n\n\n\n0\nCoefficient on CTA A\n0.0300\n\n\n1\nStandard Error\n0.0177\n\n\n2\nt Statistic\n1.6935\n\n\n3\np-value\n0.0905\n\n\n\n\n\n\n\nThe coefficient estimate on the treatment indicator should match the difference in sample means exactly, and it does. The standard error and test statistic are also very similar to the two-sample results above. This equivalence matters because regression gives a familiar framework that easily extends to richer designs with controls, interactions, or more than two treatment arms."
+  },
+  {
+    "objectID": "posts/hw1-ab-testing-frequentist-inference/index.html#the-problem-with-peeking",
+    "href": "posts/hw1-ab-testing-frequentist-inference/index.html#the-problem-with-peeking",
+    "title": "A/B Testing a Call to Action",
+    "section": "The Problem with Peeking",
+    "text": "The Problem with Peeking\nFrequentist tests control the Type I error rate only when the testing plan is fixed in advance. If I decide to look at the p-value repeatedly during the experiment and stop early whenever I see significance, I create more opportunities for a false positive.\nTo show that problem, I simulate a world where the null is true: \\(\\pi_A = \\pi_B = 0.20\\). For each simulated experiment, I test after every 100 observations per group and record whether any of those 10 peeks produces a p-value below 0.05.\n\npeek_sizes = np.arange(100, 1001, 100)\nnum_experiments = 10000\nany_significant = np.zeros(num_experiments, dtype=bool)\n\nfor exp in range(num_experiments):\n    a_null = rng.binomial(1, 0.20, size=1000)\n    b_null = rng.binomial(1, 0.20, size=1000)\n    saw_significance = False\n\n    for n in peek_sizes:\n        theta_n = a_null[:n].mean() - b_null[:n].mean()\n        pi_a_n = a_null[:n].mean()\n        pi_b_n = b_null[:n].mean()\n        se_n = np.sqrt(pi_a_n * (1 - pi_a_n) / n + pi_b_n * (1 - pi_b_n) / n)\n        if se_n == 0:\n            continue\n        z_n = theta_n / se_n\n        p_n = 2 * (1 - stats.norm.cdf(abs(z_n)))\n        if p_n &lt; 0.05:\n            saw_significance = True\n            break\n\n    any_significant[exp] = saw_significance\n\nfalse_positive_rate = any_significant.mean()\npeek_df = pd.DataFrame({\n    'Procedure': ['Single test at n = 1000', 'Peek every 100 observations'],\n    'False Positive Rate': [0.05, false_positive_rate]\n})\ndisplay(peek_df)\n\n\n\n\n\n\n\n\nProcedure\nFalse Positive Rate\n\n\n\n\n0\nSingle test at n = 1000\n0.0500\n\n\n1\nPeek every 100 observations\n0.1960\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nThe false positive rate under repeated peeking is much larger than the nominal 5% level. That means an impatient analyst can talk themselves into a winner even when no real difference exists. In practice, this is why A/B tests need a pre-specified stopping rule or an explicitly sequential testing framework rather than ad hoc monitoring."
+  },
+  {
+    "objectID": "posts/hw1-ab-testing-frequentist-inference/index.html#conclusion",
+    "href": "posts/hw1-ab-testing-frequentist-inference/index.html#conclusion",
+    "title": "A/B Testing a Call to Action",
+    "section": "Conclusion",
+    "text": "Conclusion\nThis A/B testing example shows how several central ideas in frequentist inference fit together. The Law of Large Numbers explains why the difference in sample means becomes reliable in large samples. The bootstrap and analytical formulas quantify uncertainty around that estimate. The Central Limit Theorem gives the Normal approximation that supports hypothesis testing. The regression formulation shows that the same test can be expressed in a broader modeling framework. Finally, the peeking simulation highlights why sound experimental design matters just as much as the formula used at the end.\nFor a real website experiment, the lesson is simple: randomize carefully, choose an estimator that matches the business question, quantify uncertainty, and avoid changing the rules midway through the test."
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Ben Kleiman",
+    "section": "",
+    "text": "I am Ben Kleiman, a UC San Diego MSBA student with experience in college baseball, analytics, MLB front office work, and business analytics.\nThis site is where I share my background, selected work, and the ideas I am exploring as I continue to grow in data and business analytics.\nView Resume See Projects"
+  },
+  {
+    "objectID": "index.html#sports-business-and-analytics-business-management-and-data-driven-research",
+    "href": "index.html#sports-business-and-analytics-business-management-and-data-driven-research",
+    "title": "Ben Kleiman",
+    "section": "",
+    "text": "I am Ben Kleiman, a UC San Diego MSBA student with experience in college baseball, analytics, MLB front office work, and business analytics.\nThis site is where I share my background, selected work, and the ideas I am exploring as I continue to grow in data and business analytics.\nView Resume See Projects"
   },
   {
     "objectID": "about.html",
@@ -35,18 +119,11 @@
     "text": "Current focus\nI am especially interested in using data to support clear decision-making, practical business insight, and concise communication."
   },
   {
-    "objectID": "index.html",
-    "href": "index.html",
-    "title": "Ben Kleiman",
+    "objectID": "posts.html",
+    "href": "posts.html",
+    "title": "Posts",
     "section": "",
-    "text": "I am Ben Kleiman, a UC San Diego MSBA student with experience in college baseball, analytics, MLB front office work, and business analytics.\nThis site is where I share my background, selected work, and the ideas I am exploring as I continue to grow in data and business analytics.\nView Resume See Projects"
-  },
-  {
-    "objectID": "index.html#sports-business-and-analytics-business-management-and-data-driven-research",
-    "href": "index.html#sports-business-and-analytics-business-management-and-data-driven-research",
-    "title": "Ben Kleiman",
-    "section": "",
-    "text": "I am Ben Kleiman, a UC San Diego MSBA student with experience in college baseball, analytics, MLB front office work, and business analytics.\nThis site is where I share my background, selected work, and the ideas I am exploring as I continue to grow in data and business analytics.\nView Resume See Projects"
+    "text": "A/B Testing a Call to Action\n\n\nSimulating Key Ideas from Classical Frequentist Statistics\n\n\n\n\n\n\n\n\nApr 13, 2026\n\n\nBen Kleiman\n\n\n\n\n\nNo matching items"
   },
   {
     "objectID": "projects.html",

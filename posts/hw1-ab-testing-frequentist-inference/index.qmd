@@ -1,0 +1,339 @@
+---
+title: "A/B Testing a Call to Action"
+subtitle: "Simulating Key Ideas from Classical Frequentist Statistics"
+author: "Ben Kleiman"
+date: 2026-04-13
+categories: [Statistics, A/B Testing, Python, Frequentist Inference]
+format:
+  html:
+    code-fold: false
+jupyter: python3
+---
+
+```{python}
+#| label: setup
+#| echo: false
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from scipy import stats
+import statsmodels.api as sm
+from IPython.display import display
+
+plt.style.use('seaborn-v0_8-whitegrid')
+pd.set_option('display.float_format', lambda x: f"{x:0.4f}")
+
+rng = np.random.default_rng(20260413)
+```
+
+## Introduction
+
+Suppose I am trying to grow a newsletter from my website homepage. One of the simplest levers I can change is the wording of the call to action that asks visitors to subscribe. In this post I compare two versions of that message: CTA A says **"Sign up for our newsletter here!"** while CTA B says **"Stay up to date by signing up!"**
+
+To decide which version performs better, I can run an A/B test. In an A/B test, visitors are randomly assigned to one of two versions of a page element, and I compare outcomes across the two groups. Random assignment matters because it makes the groups comparable, so any systematic difference in sign-up behavior can be attributed to the CTA rather than to differences in the visitors themselves.
+
+This setting gives a clean way to walk through several core ideas from frequentist statistics. Using simulated data, I will connect the A/B test to Bernoulli outcomes, the law of large numbers, bootstrap standard errors, the central limit theorem, hypothesis testing, regression, and the dangers of peeking at results too early.
+
+## The A/B Test as a Statistical Problem
+
+Each visitor either signs up for the newsletter or does not. That means each observation can be modeled as a Bernoulli random variable taking the value 1 for a sign-up and 0 otherwise.
+
+If the CTA wording affects behavior, then the sign-up probability may differ by group. Let $\pi_A$ denote the sign-up probability for visitors who see CTA A and let $\pi_B$ denote the sign-up probability for visitors who see CTA B. The quantity I care about is the treatment effect
+
+$$
+\theta = \pi_A - \pi_B,
+$$
+
+which is the difference in sign-up rates across the two versions.
+
+In practice I do not observe $\pi_A$ or $\pi_B$ directly, so I estimate them with sample proportions. Because the data are binary, the sample mean is exactly the sample proportion. That gives the estimator
+
+$$
+\hat\theta = \bar{X}_A - \bar{X}_B = \hat\pi_A - \hat\pi_B.
+$$
+
+If $\hat\theta$ is positive, CTA A appears to outperform CTA B. If it is negative, CTA B looks better.
+
+## Simulating Data
+
+In a real experiment, the true conversion rates would be unknown. For a simulation exercise, though, it is helpful to set them ourselves so we can study how well our statistical tools recover the truth.
+
+Here I assume that CTA A has a sign-up rate of $\pi_A = 0.22$ and CTA B has a sign-up rate of $\pi_B = 0.18$. The true difference is therefore
+
+$$
+\theta = 0.22 - 0.18 = 0.04.
+$$
+
+I simulate 1,000 visitors in each group.
+
+```{python}
+#| label: simulate-data
+#| echo: true
+n_A = 1000
+n_B = 1000
+pi_A = 0.22
+pi_B = 0.18
+true_theta = pi_A - pi_B
+
+cta_a = rng.binomial(1, pi_A, size=n_A)
+cta_b = rng.binomial(1, pi_B, size=n_B)
+
+theta_hat = cta_a.mean() - cta_b.mean()
+summary_df = pd.DataFrame({
+    'Group': ['CTA A', 'CTA B', 'Difference'],
+    'Sign-up Rate': [cta_a.mean(), cta_b.mean(), theta_hat],
+    'True Value': [pi_A, pi_B, true_theta]
+})
+display(summary_df)
+```
+
+The realized sample rates will not match the truth exactly, because sampling variation is unavoidable. Still, with 1,000 observations per group we expect the estimates to be reasonably close.
+
+## The Law of Large Numbers
+
+The Law of Large Numbers says that as the sample size grows, the sample mean converges to the population mean. In this context, that principle gives us a reason to trust $\hat\theta = \bar{X}_A - \bar{X}_B$: when the experiment gets large, the difference in sample averages should settle down near the true difference in sign-up probabilities.
+
+To visualize that idea, I compute the element-wise differences between the simulated CTA A and CTA B outcomes and then track the cumulative average of those differences.
+
+```{python}
+#| label: lln-plot
+#| echo: false
+pairwise_diff = cta_a - cta_b
+running_theta = np.cumsum(pairwise_diff) / np.arange(1, len(pairwise_diff) + 1)
+
+fig, ax = plt.subplots(figsize=(9, 5))
+ax.plot(np.arange(1, len(running_theta) + 1), running_theta, color='#0f766e', linewidth=2)
+ax.axhline(true_theta, color='#a71930', linestyle='--', linewidth=2, label='True difference = 0.04')
+ax.set_title('Running Estimate of the Difference in Sign-up Rates')
+ax.set_xlabel('Number of paired observations used')
+ax.set_ylabel('Cumulative average difference')
+ax.legend(frameon=True)
+plt.show()
+```
+
+At the beginning of the plot, the running average jumps around quite a bit because each additional observation has a large effect on the estimate. As more observations accumulate, the path becomes much more stable and starts hovering around the true difference of 0.04. That is exactly the LLN in action: large samples smooth out random noise.
+
+## Bootstrap Standard Errors
+
+A point estimate is only part of the story. In an A/B test I also want to know how precise that estimate is. The bootstrap helps answer that question by repeatedly resampling from the observed data and recalculating the statistic of interest.
+
+The bootstrap works by treating the observed sample as a stand-in for the population. I repeatedly sample with replacement from the CTA A observations and from the CTA B observations, compute a new difference in sample means for each resample, and then measure the spread of those bootstrapped estimates. The standard deviation of the bootstrap distribution is the bootstrap standard error.
+
+```{python}
+#| label: bootstrap
+#| echo: true
+B = 1000
+boot_thetas = np.empty(B)
+
+for b in range(B):
+    a_star = rng.choice(cta_a, size=n_A, replace=True)
+    b_star = rng.choice(cta_b, size=n_B, replace=True)
+    boot_thetas[b] = a_star.mean() - b_star.mean()
+
+boot_se = boot_thetas.std(ddof=1)
+pi_hat_A = cta_a.mean()
+pi_hat_B = cta_b.mean()
+analytic_se = np.sqrt(pi_hat_A * (1 - pi_hat_A) / n_A + pi_hat_B * (1 - pi_hat_B) / n_B)
+ci_lower = theta_hat - 1.96 * boot_se
+ci_upper = theta_hat + 1.96 * boot_se
+
+se_df = pd.DataFrame({
+    'Quantity': ['Bootstrap SE', 'Analytical SE', '95% CI Lower', '95% CI Upper'],
+    'Value': [boot_se, analytic_se, ci_lower, ci_upper]
+})
+display(se_df)
+```
+
+```{python}
+#| label: bootstrap-hist
+#| echo: false
+fig, ax = plt.subplots(figsize=(9, 5))
+ax.hist(boot_thetas, bins=30, color='#0f766e', alpha=0.85, edgecolor='white')
+ax.axvline(theta_hat, color='#0c234b', linewidth=2, label=f'Observed estimate = {theta_hat:0.4f}')
+ax.set_title('Bootstrap Distribution of the Estimated Treatment Effect')
+ax.set_xlabel('Bootstrapped difference in sign-up rates')
+ax.set_ylabel('Frequency')
+ax.legend(frameon=True)
+plt.show()
+```
+
+The bootstrap and analytical standard errors should be very close, and that is what I find here. The similarity is reassuring because it suggests that both approaches are capturing the same underlying uncertainty in the estimator. Using the bootstrap standard error, the 95% confidence interval gives a plausible range of values for the true treatment effect. Interpreted in plain language, it is the range of treatment effects that are most consistent with the data under repeated-sampling logic.
+
+## The Central Limit Theorem
+
+The Central Limit Theorem says that even when the underlying data are not Normally distributed, the sampling distribution of a sample mean becomes approximately Normal as the sample size grows. Since $\hat\theta$ is a difference in sample means, the same logic applies here.
+
+To illustrate that idea, I simulate the estimator 1,000 times at four different sample sizes: 25, 50, 100, and 500 observations per group.
+
+```{python}
+#| label: clt-plots
+#| echo: false
+sample_sizes = [25, 50, 100, 500]
+clt_results = {}
+
+for n in sample_sizes:
+    estimates = np.empty(1000)
+    for i in range(1000):
+        a_draw = rng.binomial(1, pi_A, size=n)
+        b_draw = rng.binomial(1, pi_B, size=n)
+        estimates[i] = a_draw.mean() - b_draw.mean()
+    clt_results[n] = estimates
+
+all_vals = np.concatenate(list(clt_results.values()))
+xmin, xmax = all_vals.min(), all_vals.max()
+
+fig, axes = plt.subplots(2, 2, figsize=(11, 8), sharex=True, sharey=True)
+axes = axes.flatten()
+
+for ax, n in zip(axes, sample_sizes):
+    ax.hist(clt_results[n], bins=30, color='#0f766e', alpha=0.85, edgecolor='white')
+    ax.axvline(true_theta, color='#a71930', linestyle='--', linewidth=2)
+    ax.set_title(f'n = {n} per group')
+    ax.set_xlim(xmin, xmax)
+    ax.set_xlabel(r'$\hat{\theta}$')
+    ax.set_ylabel('Frequency')
+
+fig.suptitle('Sampling Distribution of the Difference in Means at Different Sample Sizes', fontsize=14)
+fig.tight_layout()
+plt.show()
+```
+
+At small sample sizes, the histograms look rougher and less stable. As the sample size increases, the distribution of $\hat\theta$ becomes smoother, more symmetric, and more bell-shaped. That is the CLT showing up visually. This result matters because it gives us a practical Normal approximation for inference in large-sample A/B tests.
+
+## Hypothesis Testing
+
+A hypothesis test asks whether the evidence in the sample is strong enough to reject a benchmark claim. Here the null hypothesis is
+
+$$
+H_0: \theta = 0,
+$$
+
+meaning the two CTAs have the same sign-up rate. The alternative is
+
+$$
+H_1: \theta \neq 0,
+$$
+
+meaning the CTAs perform differently.
+
+The key step is standardization. If I subtract the null value of zero from my estimate and divide by its standard error, I get the test statistic
+
+$$
+z = \frac{\hat\theta - 0}{SE(\hat\theta)}.
+$$
+
+The logic is straightforward. By the CLT, $\hat\theta$ is approximately Normal in large samples. Under the null, that Normal distribution is centered at zero. Dividing by the standard deviation turns it into an approximate standard Normal random variable, which means I know the null reference distribution and can calculate a p-value.
+
+This procedure is often casually called a t-test, but in this Bernoulli setting it is more accurate to think of it as a large-sample z-test. The classical t-distribution result comes from Normally distributed data with an estimated variance. Here the data are binary, not Normal, and the justification comes from the CLT instead.
+
+```{python}
+#| label: hypothesis-test
+#| echo: true
+z_stat = theta_hat / analytic_se
+p_value = 2 * (1 - stats.norm.cdf(abs(z_stat)))
+
+ht_df = pd.DataFrame({
+    'Statistic': ['Estimate', 'Standard Error', 'z statistic', 'p-value'],
+    'Value': [theta_hat, analytic_se, z_stat, p_value]
+})
+display(ht_df)
+```
+
+The p-value tells me how surprising my observed estimate would be if the null hypothesis of no CTA effect were actually true. A small p-value gives evidence against $H_0$. In this simulation, the estimate is positive and the p-value indicates whether that difference is large relative to its uncertainty.
+
+## The T-Test as a Regression
+
+The same A/B test can be written as a simple linear regression. Stack the data into one column of outcomes $Y_i$ and one treatment indicator $D_i$, where $D_i = 1$ for CTA A and $D_i = 0$ for CTA B. Then estimate
+
+$$
+Y_i = \beta_0 + \beta_1 D_i + \varepsilon_i.
+$$
+
+This regression has a very direct interpretation. The intercept $\beta_0$ is the average outcome for group B, which estimates $\pi_B$. The fitted value for treated observations is $\beta_0 + \beta_1$, which estimates $\pi_A$. That means $\beta_1$ is exactly the treatment effect $\pi_A - \pi_B = \theta$.
+
+```{python}
+#| label: regression
+#| echo: true
+ab_df = pd.DataFrame({
+    'signup': np.concatenate([cta_a, cta_b]),
+    'cta_a': np.concatenate([np.ones(n_A, dtype=int), np.zeros(n_B, dtype=int)])
+})
+
+X = sm.add_constant(ab_df['cta_a'])
+ols_model = sm.OLS(ab_df['signup'], X).fit()
+reg_df = pd.DataFrame({
+    'Metric': ['Coefficient on CTA A', 'Standard Error', 't Statistic', 'p-value'],
+    'Value': [
+        ols_model.params['cta_a'],
+        ols_model.bse['cta_a'],
+        ols_model.tvalues['cta_a'],
+        ols_model.pvalues['cta_a']
+    ]
+})
+display(reg_df)
+```
+
+The coefficient estimate on the treatment indicator should match the difference in sample means exactly, and it does. The standard error and test statistic are also very similar to the two-sample results above. This equivalence matters because regression gives a familiar framework that easily extends to richer designs with controls, interactions, or more than two treatment arms.
+
+## The Problem with Peeking
+
+Frequentist tests control the Type I error rate only when the testing plan is fixed in advance. If I decide to look at the p-value repeatedly during the experiment and stop early whenever I see significance, I create more opportunities for a false positive.
+
+To show that problem, I simulate a world where the null is true: $\pi_A = \pi_B = 0.20$. For each simulated experiment, I test after every 100 observations per group and record whether any of those 10 peeks produces a p-value below 0.05.
+
+```{python}
+#| label: peeking
+#| echo: true
+peek_sizes = np.arange(100, 1001, 100)
+num_experiments = 10000
+any_significant = np.zeros(num_experiments, dtype=bool)
+
+for exp in range(num_experiments):
+    a_null = rng.binomial(1, 0.20, size=1000)
+    b_null = rng.binomial(1, 0.20, size=1000)
+    saw_significance = False
+
+    for n in peek_sizes:
+        theta_n = a_null[:n].mean() - b_null[:n].mean()
+        pi_a_n = a_null[:n].mean()
+        pi_b_n = b_null[:n].mean()
+        se_n = np.sqrt(pi_a_n * (1 - pi_a_n) / n + pi_b_n * (1 - pi_b_n) / n)
+        if se_n == 0:
+            continue
+        z_n = theta_n / se_n
+        p_n = 2 * (1 - stats.norm.cdf(abs(z_n)))
+        if p_n < 0.05:
+            saw_significance = True
+            break
+
+    any_significant[exp] = saw_significance
+
+false_positive_rate = any_significant.mean()
+peek_df = pd.DataFrame({
+    'Procedure': ['Single test at n = 1000', 'Peek every 100 observations'],
+    'False Positive Rate': [0.05, false_positive_rate]
+})
+display(peek_df)
+```
+
+```{python}
+#| label: peeking-plot
+#| echo: false
+fig, ax = plt.subplots(figsize=(8, 5))
+ax.bar(peek_df['Procedure'], peek_df['False Positive Rate'], color=['#0c234b', '#a71930'])
+ax.axhline(0.05, linestyle='--', color='black', linewidth=1.5, label='Nominal 5% level')
+ax.set_ylim(0, max(0.08, false_positive_rate + 0.03))
+ax.set_ylabel('Probability of at least one false positive')
+ax.set_title('Peeking Inflates the Type I Error Rate')
+ax.legend(frameon=True)
+plt.xticks(rotation=10)
+plt.show()
+```
+
+The false positive rate under repeated peeking is much larger than the nominal 5% level. That means an impatient analyst can talk themselves into a winner even when no real difference exists. In practice, this is why A/B tests need a pre-specified stopping rule or an explicitly sequential testing framework rather than ad hoc monitoring.
+
+## Conclusion
+
+This A/B testing example shows how several central ideas in frequentist inference fit together. The Law of Large Numbers explains why the difference in sample means becomes reliable in large samples. The bootstrap and analytical formulas quantify uncertainty around that estimate. The Central Limit Theorem gives the Normal approximation that supports hypothesis testing. The regression formulation shows that the same test can be expressed in a broader modeling framework. Finally, the peeking simulation highlights why sound experimental design matters just as much as the formula used at the end.
+
+For a real website experiment, the lesson is simple: randomize carefully, choose an estimator that matches the business question, quantify uncertainty, and avoid changing the rules midway through the test.
