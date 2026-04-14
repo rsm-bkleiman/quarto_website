@@ -18,8 +18,18 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from scipy.stats import norm
 import statsmodels.api as sm
+from IPython.display import display
 
 rng = np.random.default_rng(20260413)
+plt.style.use('seaborn-v0_8-whitegrid')
+
+def show_table(df, caption):
+    display(
+        df.style
+        .hide(axis='index')
+        .format(precision=4)
+        .set_caption(caption)
+    )
 ```
 
 ## Introduction
@@ -70,12 +80,15 @@ b = rng.binomial(1, pi_B, n_B)
 
 theta_hat = a.mean() - b.mean()
 
-pd.DataFrame({
-    "group": ["CTA A", "CTA B", "Difference"],
-    "estimate": [a.mean(), b.mean(), theta_hat],
-    "true value": [pi_A, pi_B, true_theta]
+sim_table = pd.DataFrame({
+    "Group": ["CTA A", "CTA B", "Difference"],
+    "Estimate": [a.mean(), b.mean(), theta_hat],
+    "True value": [pi_A, pi_B, true_theta]
 })
+show_table(sim_table, "Simulated sign-up rates and the true values")
 ```
+
+The simulated rates are close to the true values, but not exactly equal. That small gap is sampling variation.
 
 ## The Law of Large Numbers
 
@@ -84,14 +97,18 @@ The Law of Large Numbers says that as the sample size gets larger, the sample me
 To show this, I take the element-wise differences between the A and B draws and compute the running average.
 
 ```{python}
-#| label: lln-plot
-#| echo: false
+#| label: lln-code
+#| echo: true
 diff = a - b
 running_mean = np.cumsum(diff) / np.arange(1, len(diff) + 1)
+```
 
+```{python}
+#| label: lln-plot
+#| echo: false
 plt.figure(figsize=(8, 4.5))
-plt.plot(running_mean, color="#0f766e")
-plt.axhline(true_theta, color="#a71930", linestyle="--", label="True difference = 0.04")
+plt.plot(running_mean, color="#0f766e", linewidth=2)
+plt.axhline(true_theta, color="#a71930", linestyle="--", linewidth=2, label="True difference = 0.04")
 plt.xlabel("Number of observations")
 plt.ylabel("Running average")
 plt.title("Law of Large Numbers for the Difference in Means")
@@ -107,6 +124,7 @@ Next, I want to know how precise my estimate is. The bootstrap helps with this. 
 
 ```{python}
 #| label: bootstrap
+#| echo: true
 B = 1000
 boot = np.empty(B)
 
@@ -122,10 +140,11 @@ analytic_se = np.sqrt(pi_hat_A * (1 - pi_hat_A) / n_A + pi_hat_B * (1 - pi_hat_B
 ci_low = theta_hat - 1.96 * boot_se
 ci_high = theta_hat + 1.96 * boot_se
 
-pd.DataFrame({
-    "result": ["Bootstrap SE", "Analytical SE", "95% CI lower", "95% CI upper"],
-    "value": [boot_se, analytic_se, ci_low, ci_high]
+bootstrap_table = pd.DataFrame({
+    "Result": ["Bootstrap SE", "Analytical SE", "95% CI lower", "95% CI upper"],
+    "Value": [boot_se, analytic_se, ci_low, ci_high]
 })
+show_table(bootstrap_table, "Bootstrap uncertainty summary")
 ```
 
 ```{python}
@@ -133,7 +152,7 @@ pd.DataFrame({
 #| echo: false
 plt.figure(figsize=(8, 4.5))
 plt.hist(boot, bins=30, color="#0f766e", edgecolor="white")
-plt.axvline(theta_hat, color="#0c234b", label="Observed estimate")
+plt.axvline(theta_hat, color="#0c234b", linewidth=2, label="Observed estimate")
 plt.xlabel("Bootstrap estimates")
 plt.ylabel("Count")
 plt.title("Bootstrap Distribution of the Difference in Means")
@@ -141,7 +160,7 @@ plt.legend()
 plt.show()
 ```
 
-The bootstrap standard error and the analytical standard error are very close. That means both methods are giving a similar measure of uncertainty. Using the bootstrap standard error, I can build a 95% confidence interval for the treatment effect.
+The bootstrap standard error and the analytical standard error are very close. That means both methods are giving a similar measure of uncertainty. The confidence interval gives a reasonable range for the treatment effect.
 
 ## The Central Limit Theorem
 
@@ -169,7 +188,7 @@ all_values = np.concatenate([results[n] for n in sizes])
 
 for ax, n in zip(axes, sizes):
     ax.hist(results[n], bins=30, color="#0f766e", edgecolor="white")
-    ax.axvline(true_theta, color="#a71930", linestyle="--")
+    ax.axvline(true_theta, color="#a71930", linestyle="--", linewidth=2)
     ax.set_title(f"n = {n}")
     ax.set_xlim(all_values.min(), all_values.max())
     ax.set_xlabel(r"$\hat{\theta}$")
@@ -207,13 +226,15 @@ This is often called a t-test in practice, but here it is closer to a z-test bec
 
 ```{python}
 #| label: hypothesis-test
+#| echo: true
 z_stat = theta_hat / analytic_se
 p_value = 2 * (1 - norm.cdf(abs(z_stat)))
 
-pd.DataFrame({
-    "result": ["Estimate", "Standard error", "z statistic", "p-value"],
-    "value": [theta_hat, analytic_se, z_stat, p_value]
+hypothesis_table = pd.DataFrame({
+    "Result": ["Estimate", "Standard error", "z statistic", "p-value"],
+    "Value": [theta_hat, analytic_se, z_stat, p_value]
 })
+show_table(hypothesis_table, "Hypothesis test results")
 ```
 
 The p-value shows whether the observed difference is large relative to the standard error. A small p-value would give evidence against the null of no difference.
@@ -232,6 +253,7 @@ Here, $\beta_0$ is the mean of group B, and $\beta_1$ is the difference between 
 
 ```{python}
 #| label: regression
+#| echo: true
 ab = pd.DataFrame({
     "y": np.concatenate([a, b]),
     "D": np.concatenate([np.ones(n_A), np.zeros(n_B)])
@@ -240,10 +262,11 @@ ab = pd.DataFrame({
 X = sm.add_constant(ab["D"])
 model = sm.OLS(ab["y"], X).fit()
 
-pd.DataFrame({
-    "result": ["beta_1", "Standard error", "t statistic", "p-value"],
-    "value": [model.params["D"], model.bse["D"], model.tvalues["D"], model.pvalues["D"]]
+regression_table = pd.DataFrame({
+    "Result": ["beta_1", "Standard error", "t statistic", "p-value"],
+    "Value": [model.params["D"], model.bse["D"], model.tvalues["D"], model.pvalues["D"]]
 })
+show_table(regression_table, "Regression results")
 ```
 
 The regression coefficient matches the difference in means. This matters because regression makes it easy to extend the same idea to more complex settings.
@@ -256,6 +279,7 @@ To show this, I simulate a world where the null is true: $\pi_A = \pi_B = 0.20$.
 
 ```{python}
 #| label: peeking
+#| echo: true
 peek_sizes = np.arange(100, 1001, 100)
 false_positive = []
 
@@ -279,10 +303,11 @@ for _ in range(10000):
 
 peek_rate = np.mean(false_positive)
 
-pd.DataFrame({
-    "procedure": ["Single test", "Peeking every 100"],
-    "false positive rate": [0.05, peek_rate]
+peeking_table = pd.DataFrame({
+    "Procedure": ["Single test", "Peeking every 100"],
+    "False positive rate": [0.05, peek_rate]
 })
+show_table(peeking_table, "False positive rates with and without peeking")
 ```
 
 ```{python}
@@ -290,7 +315,7 @@ pd.DataFrame({
 #| echo: false
 plt.figure(figsize=(7, 4.5))
 plt.bar(["Single test", "Peeking every 100"], [0.05, peek_rate], color=["#0c234b", "#a71930"])
-plt.axhline(0.05, color="black", linestyle="--")
+plt.axhline(0.05, color="black", linestyle="--", linewidth=1.5)
 plt.ylabel("False positive rate")
 plt.title("Peeking Increases Type I Error")
 plt.show()
