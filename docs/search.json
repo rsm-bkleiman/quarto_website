@@ -7,6 +7,83 @@
     "text": "Download PDF file."
   },
   {
+    "objectID": "posts/hw2-card-krueger-did/index.html",
+    "href": "posts/hw2-card-krueger-did/index.html",
+    "title": "Replication of Card and Krueger (1994)",
+    "section": "",
+    "text": "This post replicates the headline difference-in-differences result from Card and Krueger (1994) using the original public fast-food restaurant data. The central finding is that employment at New Jersey restaurants did not fall relative to nearby Pennsylvania after New Jersey raised its minimum wage in April 1992.\n\nIn Minimum Wages and Employment: A Case Study of the Fast-Food Industry in New Jersey and Pennsylvania, David Card and Alan Krueger study whether New Jersey’s April 1, 1992 minimum-wage increase reduced employment in the fast-food sector. Their research design compares restaurants in New Jersey, where the minimum wage rose from $4.25 to $5.05, with similar restaurants in eastern Pennsylvania, where the minimum wage remained unchanged.\nThe paper became influential because it challenged a simple textbook prediction: if the price of low-wage labor rises, employment should decline. Card and Krueger instead find no evidence of an employment loss. Their empirical strategy is a classic difference-in-differences design, comparing the change in employment in New Jersey before and after the policy to the contemporaneous change in Pennsylvania.\nThis post is organized to answer each part of the assignment directly:\n\nIt introduces the paper’s research question and empirical setting.\nIt replicates a key statistical finding from the paper, especially the Table 3 difference-in-differences estimate.\nIt goes beyond the core replication by reproducing another result, converting Table 3 into a figure, and explaining why the method supports a causal interpretation.\n\n\nLocal paper PDF: card_krueger_1994.pdf\nOriginal data archive source: https://davidcard.berkeley.edu/data_sets.html"
+  },
+  {
+    "objectID": "posts/hw2-card-krueger-did/index.html#introduction",
+    "href": "posts/hw2-card-krueger-did/index.html#introduction",
+    "title": "Replication of Card and Krueger (1994)",
+    "section": "",
+    "text": "This post replicates the headline difference-in-differences result from Card and Krueger (1994) using the original public fast-food restaurant data. The central finding is that employment at New Jersey restaurants did not fall relative to nearby Pennsylvania after New Jersey raised its minimum wage in April 1992.\n\nIn Minimum Wages and Employment: A Case Study of the Fast-Food Industry in New Jersey and Pennsylvania, David Card and Alan Krueger study whether New Jersey’s April 1, 1992 minimum-wage increase reduced employment in the fast-food sector. Their research design compares restaurants in New Jersey, where the minimum wage rose from $4.25 to $5.05, with similar restaurants in eastern Pennsylvania, where the minimum wage remained unchanged.\nThe paper became influential because it challenged a simple textbook prediction: if the price of low-wage labor rises, employment should decline. Card and Krueger instead find no evidence of an employment loss. Their empirical strategy is a classic difference-in-differences design, comparing the change in employment in New Jersey before and after the policy to the contemporaneous change in Pennsylvania.\nThis post is organized to answer each part of the assignment directly:\n\nIt introduces the paper’s research question and empirical setting.\nIt replicates a key statistical finding from the paper, especially the Table 3 difference-in-differences estimate.\nIt goes beyond the core replication by reproducing another result, converting Table 3 into a figure, and explaining why the method supports a causal interpretation.\n\n\nLocal paper PDF: card_krueger_1994.pdf\nOriginal data archive source: https://davidcard.berkeley.edu/data_sets.html"
+  },
+  {
+    "objectID": "posts/hw2-card-krueger-did/index.html#main-analysis",
+    "href": "posts/hw2-card-krueger-did/index.html#main-analysis",
+    "title": "Replication of Card and Krueger (1994)",
+    "section": "Main Analysis",
+    "text": "Main Analysis\n\nLoading the Original Data\nThe public dataset is a fixed-width file containing 410 restaurants. The key outcome is full-time-equivalent employment, defined as\n\\[\n\\text{FTE} = \\text{full-time employees} + \\text{managers} + 0.5 \\times \\text{part-time employees}.\n\\]\nOne coding choice is essential for matching the published results:\n\nstores coded as permanently closed in wave 2 are assigned zero employment;\ntemporarily closed stores are treated as missing in the post period.\n\n\ncolspecs = [\n    (0, 3), (4, 5), (6, 7), (8, 9), (10, 11), (12, 13), (14, 15), (16, 17),\n    (18, 19), (20, 21), (22, 24), (25, 30), (31, 36), (37, 42), (43, 48),\n    (49, 54), (55, 60), (61, 62), (63, 68), (69, 70), (71, 76), (77, 82),\n    (83, 88), (89, 94), (95, 100), (101, 103), (104, 106), (107, 108),\n    (109, 110), (111, 117), (118, 120), (121, 126), (127, 132), (133, 138),\n    (139, 144), (145, 150), (151, 156), (157, 158), (159, 160), (161, 166),\n    (167, 172), (173, 178), (179, 184), (185, 190), (191, 193), (194, 196)\n]\n\ncolumns = [\n    \"sheet\", \"chain\", \"co_owned\", \"state\", \"southj\", \"centralj\", \"northj\",\n    \"pa1\", \"pa2\", \"shore\", \"ncalls\", \"empft\", \"emppt\", \"nmgrs\", \"wage_st\",\n    \"inctime\", \"firstinc\", \"bonus\", \"pctaff\", \"meals\", \"open\", \"hrsopen\",\n    \"psoda\", \"pfry\", \"pentree\", \"nregs\", \"nregs11\", \"type2\", \"status2\",\n    \"date2\", \"ncalls2\", \"empft2\", \"emppt2\", \"nmgrs2\", \"wage_st2\", \"inctime2\",\n    \"firstin2\", \"special2\", \"meals2\", \"open2r\", \"hrsopen2\", \"psoda2\", \"pfry2\",\n    \"pentree2\", \"nregs2\", \"nregs112\"\n]\n\nck = pd.read_fwf(\"data/njmin/public.dat\", colspecs=colspecs, names=columns)\n\nfor col in columns:\n    ck[col] = pd.to_numeric(ck[col], errors=\"coerce\")\n\nck[\"nj\"] = ck[\"state\"]\nck[\"fte\"] = ck[\"empft\"] + ck[\"nmgrs\"] + 0.5 * ck[\"emppt\"]\nck[\"fte2_raw\"] = ck[\"empft2\"] + ck[\"nmgrs2\"] + 0.5 * ck[\"emppt2\"]\nck[\"fte2_t3\"] = ck[\"fte2_raw\"]\nck.loc[ck[\"status2\"] == 3, \"fte2_t3\"] = 0\n\nck[\"dwage\"] = ck[\"wage_st2\"] - ck[\"wage_st\"]\nck[\"demp\"] = ck[\"fte2_raw\"] - ck[\"fte\"]\nck[\"gap\"] = np.where(\n    ck[\"state\"] == 0,\n    0,\n    np.where(\n        ck[\"wage_st\"] &gt;= 5.05,\n        0,\n        np.where(ck[\"wage_st\"] &gt; 0, (5.05 - ck[\"wage_st\"]) / ck[\"wage_st\"], np.nan)\n    )\n)\nck[\"pmeal\"] = ck[\"psoda\"] + ck[\"pfry\"] + ck[\"pentree\"]\nck[\"pmeal2\"] = ck[\"psoda2\"] + ck[\"pfry2\"] + ck[\"pentree2\"]\nck[\"closed\"] = (ck[\"status2\"] == 3).astype(int)\n\nsample_summary = pd.DataFrame({\n    \"Item\": [\n        \"Total stores in public data\",\n        \"New Jersey stores\",\n        \"Pennsylvania stores\",\n        \"Permanently closed in wave 2\",\n        \"Temporarily closed / renovation / fire / highway in wave 2\"\n    ],\n    \"Count\": [\n        ck.shape[0],\n        int((ck[\"nj\"] == 1).sum()),\n        int((ck[\"nj\"] == 0).sum()),\n        int((ck[\"status2\"] == 3).sum()),\n        int(ck[\"status2\"].isin([2, 4, 5]).sum())\n    ]\n})\n\nshow_table(sample_summary, \"Sample counts from the original Card and Krueger public data\", precision=0)\n\n\n\n\n\n\nTable 1: Sample counts from the original Card and Krueger public data\n\n\n\n\n\nItem\nCount\n\n\n\n\nTotal stores in public data\n410\n\n\nNew Jersey stores\n331\n\n\nPennsylvania stores\n79\n\n\nPermanently closed in wave 2\n6\n\n\nTemporarily closed / renovation / fire / highway in wave 2\n4\n\n\n\n\n\n\n\n\n\n\nReplicating Part of Table 2\nI begin with several descriptive statistics from Table 2: FTE employment, the starting wage, and the price of a full meal in both survey waves. If these values line up closely with the paper, that is strong evidence that the data import and variable construction are correct.\n\ntable2_replication = pd.DataFrame({\n    \"Statistic\": [\n        \"Wave 1 FTE employment\",\n        \"Wave 1 starting wage\",\n        \"Wave 1 full-meal price\",\n        \"Wave 2 FTE employment\",\n        \"Wave 2 starting wage\",\n        \"Wave 2 full-meal price\"\n    ],\n    \"NJ (paper)\": [20.4, 4.61, 3.35, 21.0, 5.08, 3.41],\n    \"NJ (replication)\": [\n        ck.loc[ck[\"nj\"] == 1, \"fte\"].mean(),\n        ck.loc[ck[\"nj\"] == 1, \"wage_st\"].mean(),\n        ck.loc[ck[\"nj\"] == 1, \"pmeal\"].mean(),\n        ck.loc[ck[\"nj\"] == 1, \"fte2_raw\"].mean(),\n        ck.loc[ck[\"nj\"] == 1, \"wage_st2\"].mean(),\n        ck.loc[ck[\"nj\"] == 1, \"pmeal2\"].mean()\n    ],\n    \"PA (paper)\": [23.3, 4.63, 3.03, 21.2, 4.62, 3.03],\n    \"PA (replication)\": [\n        ck.loc[ck[\"nj\"] == 0, \"fte\"].mean(),\n        ck.loc[ck[\"nj\"] == 0, \"wage_st\"].mean(),\n        ck.loc[ck[\"nj\"] == 0, \"pmeal\"].mean(),\n        ck.loc[ck[\"nj\"] == 0, \"fte2_raw\"].mean(),\n        ck.loc[ck[\"nj\"] == 0, \"wage_st2\"].mean(),\n        ck.loc[ck[\"nj\"] == 0, \"pmeal2\"].mean()\n    ]\n})\n\nshow_table(table2_replication, \"Selected entries from Table 2: published values and replication\", precision=3)\n\n\n\n\n\n\nTable 2: Selected entries from Table 2: published values and replication\n\n\n\n\n\nStatistic\nNJ (paper)\nNJ (replication)\nPA (paper)\nPA (replication)\n\n\n\n\nWave 1 FTE employment\n20.400\n20.439\n23.300\n23.331\n\n\nWave 1 starting wage\n4.610\n4.612\n4.630\n4.630\n\n\nWave 1 full-meal price\n3.350\n3.351\n3.030\n3.042\n\n\nWave 2 FTE employment\n21.000\n21.027\n21.200\n21.166\n\n\nWave 2 starting wage\n5.080\n5.081\n4.620\n4.617\n\n\nWave 2 full-meal price\n3.410\n3.415\n3.030\n3.027\n\n\n\n\n\n\n\n\nThe replicated values closely match the published table. That gives confidence that the fixed-width import, the FTE calculation, and the price variables all align with the authors’ original setup.\n\n\nReplicating Table 3\nThe best-known result in the paper is the simple difference-in-differences comparison in Table 3. I compute average FTE employment before and after the policy in New Jersey and Pennsylvania, then compare the two changes.\n\nnj_before = ck.loc[ck[\"nj\"] == 1, \"fte\"].mean()\npa_before = ck.loc[ck[\"nj\"] == 0, \"fte\"].mean()\nnj_after = ck.loc[ck[\"nj\"] == 1, \"fte2_t3\"].mean()\npa_after = ck.loc[ck[\"nj\"] == 0, \"fte2_t3\"].mean()\n\nnj_change = nj_after - nj_before\npa_change = pa_after - pa_before\ndid_estimate = nj_change - pa_change\n\ntable3_replication = pd.DataFrame({\n    \"Row\": [\n        \"FTE employment before\",\n        \"FTE employment after\",\n        \"Change in mean FTE employment\"\n    ],\n    \"NJ (paper)\": [20.44, 21.03, 0.59],\n    \"NJ (replication)\": [nj_before, nj_after, nj_change],\n    \"PA (paper)\": [23.33, 21.17, -2.16],\n    \"PA (replication)\": [pa_before, pa_after, pa_change],\n    \"Difference (paper)\": [-2.89, -0.14, 2.76],\n    \"Difference (replication)\": [nj_before - pa_before, nj_after - pa_after, did_estimate]\n})\n\nshow_table(table3_replication, \"Replicating the nine core entries from Table 3\", precision=3)\n\n\n\n\n\n\nTable 3: Replicating the nine core entries from Table 3\n\n\n\n\n\nRow\nNJ (paper)\nNJ (replication)\nPA (paper)\nPA (replication)\nDifference (paper)\nDifference (replication)\n\n\n\n\nFTE employment before\n20.440\n20.439\n23.330\n23.331\n-2.890\n-2.892\n\n\nFTE employment after\n21.030\n21.027\n21.170\n21.166\n-0.140\n-0.138\n\n\nChange in mean FTE employment\n0.590\n0.588\n-2.160\n-2.166\n2.760\n2.754\n\n\n\n\n\n\n\n\nThe replicated difference-in-differences estimate is 2.754, which rounds to the published value of 2.76. In other words, the basic comparison in Card and Krueger’s Table 3 is reproduced almost exactly.\nFor this assignment, the most important benchmark is that the point estimates match the paper closely. They do here. Standard errors can differ across replications when sample definitions or coding choices differ, especially in this dataset when closed or temporarily closed stores are handled differently.\n\n\nReplicating Table 4, Column (i)\nTable 4 moves from raw mean differences to a regression framework. Column (i) regresses the change in employment on an indicator for New Jersey using a restricted sample: stores with valid employment changes and valid wage information in both waves, plus stores that permanently closed.\nThis restriction matters. The authors’ original SAS program constructs a sample of 357 stores for this specification, and using that same rule is what allows the replication to line up cleanly.\n\ntable4_sample = ck.loc[\n    ck[\"demp\"].notna() & ((ck[\"closed\"] == 1) | ((ck[\"closed\"] == 0) & ck[\"dwage\"].notna()))\n].copy()\n\ntable4_model = smf.ols(\"demp ~ nj\", data=table4_sample).fit()\n\ntable4_results = pd.DataFrame({\n    \"Quantity\": [\n        \"Coefficient on New Jersey dummy\",\n        \"Standard error\",\n        \"Number of stores\"\n    ],\n    \"Paper, col. (i)\": [2.33, 1.19, 357],\n    \"Replication\": [\n        table4_model.params[\"nj\"],\n        table4_model.bse[\"nj\"],\n        table4_sample.shape[0]\n    ]\n})\n\nshow_table(table4_results, \"Replicating Table 4, column (i)\", precision=3)\n\n\n\n\n\n\nTable 4: Replicating Table 4, column (i)\n\n\n\n\n\nQuantity\nPaper, col. (i)\nReplication\n\n\n\n\nCoefficient on New Jersey dummy\n2.330\n2.326\n\n\nStandard error\n1.190\n1.192\n\n\nNumber of stores\n357.000\n357.000\n\n\n\n\n\n\n\n\nThis coefficient also matches the published estimate closely. On the restricted Table 4 sample, employment in New Jersey rose by about 2.33 FTE workers per store relative to Pennsylvania."
+  },
+  {
+    "objectID": "posts/hw2-card-krueger-did/index.html#something-additional",
+    "href": "posts/hw2-card-krueger-did/index.html#something-additional",
+    "title": "Replication of Card and Krueger (1994)",
+    "section": "Something Additional",
+    "text": "Something Additional\n\nTurn Table 3 into a Figure\nTo make the identification strategy easier to read, I translate Table 3 into a cleaner figure. The left panel shows average employment levels before and after the policy with standard-error bars. The right panel shows the within-state changes and the implied difference-in-differences estimate.\n\n\n\n\n\n\n\n\n\nThe figure makes the identifying comparison immediate: employment edges up in New Jersey, falls in Pennsylvania, and the gap between those two changes is the treatment effect.\n\n\nWhy Difference-in-Differences Supports a Causal Interpretation\nThe logic of difference-in-differences is straightforward. New Jersey and Pennsylvania may differ for many fixed reasons, and 1992 may have brought broader shocks that affected both states. The estimator removes both sources of variation:\n\\[\n\\text{Effect} =\n(\\overline{Y}_{NJ,after} - \\overline{Y}_{NJ,before})\n-\n(\\overline{Y}_{PA,after} - \\overline{Y}_{PA,before}).\n\\]\nUnder the parallel trends assumption, Pennsylvania provides a credible estimate of how employment in New Jersey would have changed even without the policy. The remaining difference is then interpreted as the effect of the minimum-wage increase.\nThe same idea can be written as a regression:\n\\[\nY_{it} = \\alpha + \\beta_1 NJ_i + \\beta_2 Post_t + \\beta_3 (NJ_i \\times Post_t) + \\varepsilon_{it},\n\\]\nwhere \\(\\beta_3\\) is the difference-in-differences estimate.\n\npanel = pd.concat([\n    ck[[\"sheet\", \"nj\", \"fte\"]].rename(columns={\"fte\": \"employment\"}).assign(post=0),\n    ck[[\"sheet\", \"nj\", \"fte2_t3\"]].rename(columns={\"fte2_t3\": \"employment\"}).assign(post=1)\n], ignore_index=True)\n\npanel = panel.dropna(subset=[\"employment\"])\ndid_model = smf.ols(\"employment ~ nj * post\", data=panel).fit()\n\ndid_table = pd.DataFrame({\n    \"Coefficient\": [\"Interaction: nj x post\"],\n    \"Estimate\": [did_model.params[\"nj:post\"]],\n    \"Standard error\": [did_model.bse[\"nj:post\"]]\n})\n\nshow_table(did_table, \"Difference-in-differences regression equivalent to the Table 3 comparison\", precision=3)\n\n\n\n\n\n\nTable 5: Difference-in-differences regression equivalent to the Table 3 comparison\n\n\n\n\n\nCoefficient\nEstimate\nStandard error\n\n\n\n\nInteraction: nj x post\n2.754\n1.688\n\n\n\n\n\n\n\n\nThe interaction coefficient is the same treatment effect shown in Table 3 and in the figure: roughly 2.75 additional FTE workers per store in New Jersey relative to Pennsylvania after the policy change."
+  },
+  {
+    "objectID": "posts/hw2-card-krueger-did/index.html#conclusion",
+    "href": "posts/hw2-card-krueger-did/index.html#conclusion",
+    "title": "Replication of Card and Krueger (1994)",
+    "section": "Conclusion",
+    "text": "Conclusion\nThis replication reproduces the central empirical pattern in Card and Krueger (1994). The selected descriptive statistics from Table 2 line up closely, the Table 3 difference-in-differences estimate matches at 2.75, and the Table 4 column (i) regression yields the same substantive result on the restricted sample.\nThe substantive conclusion is also the same as in the original paper: in this setting, the New Jersey minimum-wage increase does not appear to have reduced fast-food employment relative to nearby Pennsylvania. That result is what makes the paper so memorable. It shows how a simple but well-executed research design can overturn an intuitive prediction and reshape an important policy debate."
+  },
+  {
+    "objectID": "posts.html",
+    "href": "posts.html",
+    "title": "Posts",
+    "section": "",
+    "text": "Replication of Card and Krueger (1994)\n\n\nMinimum Wages and Employment: A Case Study of the Fast-Food Industry in New Jersey and Pennsylvania\n\n\n\n\n\n\n\n\nApr 22, 2026\n\n\nBen Kleiman\n\n\n\n\n\n\n\n\n\n\n\n\nMGTA-495 HW1: A/B Testing and Simulating Key Ideas in Frequentist Statistical Inference\n\n\nA/B Testing a Call to Action\n\n\n\n\n\n\n\n\nApr 13, 2026\n\n\nBen Kleiman\n\n\n\n\n\nNo matching items"
+  },
+  {
+    "objectID": "about.html",
+    "href": "about.html",
+    "title": "About",
+    "section": "",
+    "text": "This website is a simple portfolio for sharing my academic background, project work, and professional materials."
+  },
+  {
+    "objectID": "about.html#what-this-site-includes",
+    "href": "about.html#what-this-site-includes",
+    "title": "About",
+    "section": "What this site includes",
+    "text": "What this site includes\n\nA homepage with a quick overview of who I am and what I am working on.\nA projects section for coursework, portfolio pieces, and technical work.\nA resume page with a downloadable PDF.\nA posts section for future writing and reflections."
+  },
+  {
+    "objectID": "about.html#current-focus",
+    "href": "about.html#current-focus",
+    "title": "About",
+    "section": "Current focus",
+    "text": "Current focus\nI am especially interested in using data to support clear decision-making, practical business insight, and concise communication."
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Ben Kleiman",
+    "section": "",
+    "text": "I am Ben Kleiman, a UC San Diego MSBA student with experience in college baseball, analytics, MLB front office work, and business analytics.\nThis site is where I share my background, selected work, and the ideas I am exploring as I continue to grow in data and business analytics.\nView Resume See Projects"
+  },
+  {
+    "objectID": "index.html#sports-business-and-analytics-business-management-and-data-driven-research",
+    "href": "index.html#sports-business-and-analytics-business-management-and-data-driven-research",
+    "title": "Ben Kleiman",
+    "section": "",
+    "text": "I am Ben Kleiman, a UC San Diego MSBA student with experience in college baseball, analytics, MLB front office work, and business analytics.\nThis site is where I share my background, selected work, and the ideas I am exploring as I continue to grow in data and business analytics.\nView Resume See Projects"
+  },
+  {
     "objectID": "posts/hw1-ab-testing-frequentist-inference/index.html",
     "href": "posts/hw1-ab-testing-frequentist-inference/index.html",
     "title": "MGTA-495 HW1: A/B Testing and Simulating Key Ideas in Frequentist Statistical Inference",
@@ -75,48 +152,6 @@
     "title": "MGTA-495 HW1: A/B Testing and Simulating Key Ideas in Frequentist Statistical Inference",
     "section": "The Problem with Peeking",
     "text": "The Problem with Peeking\nPeeking is a problem in frequentist statistics because each extra test gives another chance for a false positive. A single test at the 5% level has a 5% false positive rate, but checking many times raises the chance of rejecting the null by mistake.\nTo show this, I simulate a world where the null is true: \\(\\pi_A = \\pi_B = 0.20\\). I test after every 100 observations per group and record whether any of the 10 tests is significant.\n\npeek_sizes = np.arange(100, 1001, 100)\nfalse_positive = []\n\nfor _ in range(10000):\n    a0 = rng.binomial(1, 0.20, 1000)\n    b0 = rng.binomial(1, 0.20, 1000)\n    reject = False\n\n    for n in peek_sizes:\n        diff_n = a0[:n].mean() - b0[:n].mean()\n        se_n = np.sqrt(a0[:n].mean() * (1 - a0[:n].mean()) / n + b0[:n].mean() * (1 - b0[:n].mean()) / n)\n        if se_n == 0:\n            continue\n        z_n = diff_n / se_n\n        p_n = 2 * (1 - norm.cdf(abs(z_n)))\n        if p_n &lt; 0.05:\n            reject = True\n            break\n\n    false_positive.append(reject)\n\npeek_rate = np.mean(false_positive)\n\npeeking_table = pd.DataFrame({\n    \"Procedure\": [\"Single test\", \"Peeking every 100\"],\n    \"False positive rate\": [0.05, peek_rate]\n})\nshow_table(peeking_table, \"False positive rates with and without peeking\")\n\n\n\n\n\n\nTable 5: False positive rates with and without peeking\n\n\n\n\n\nProcedure\nFalse positive rate\n\n\n\n\nSingle test\n0.0500\n\n\nPeeking every 100\n0.1960\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nThe false positive rate with peeking is much higher than 5%. This shows why checking results over and over can lead to false conclusions."
-  },
-  {
-    "objectID": "index.html",
-    "href": "index.html",
-    "title": "Ben Kleiman",
-    "section": "",
-    "text": "I am Ben Kleiman, a UC San Diego MSBA student with experience in college baseball, analytics, MLB front office work, and business analytics.\nThis site is where I share my background, selected work, and the ideas I am exploring as I continue to grow in data and business analytics.\nView Resume See Projects"
-  },
-  {
-    "objectID": "index.html#sports-business-and-analytics-business-management-and-data-driven-research",
-    "href": "index.html#sports-business-and-analytics-business-management-and-data-driven-research",
-    "title": "Ben Kleiman",
-    "section": "",
-    "text": "I am Ben Kleiman, a UC San Diego MSBA student with experience in college baseball, analytics, MLB front office work, and business analytics.\nThis site is where I share my background, selected work, and the ideas I am exploring as I continue to grow in data and business analytics.\nView Resume See Projects"
-  },
-  {
-    "objectID": "about.html",
-    "href": "about.html",
-    "title": "About",
-    "section": "",
-    "text": "This website is a simple portfolio for sharing my academic background, project work, and professional materials."
-  },
-  {
-    "objectID": "about.html#what-this-site-includes",
-    "href": "about.html#what-this-site-includes",
-    "title": "About",
-    "section": "What this site includes",
-    "text": "What this site includes\n\nA homepage with a quick overview of who I am and what I am working on.\nA projects section for coursework, portfolio pieces, and technical work.\nA resume page with a downloadable PDF.\nA posts section for future writing and reflections."
-  },
-  {
-    "objectID": "about.html#current-focus",
-    "href": "about.html#current-focus",
-    "title": "About",
-    "section": "Current focus",
-    "text": "Current focus\nI am especially interested in using data to support clear decision-making, practical business insight, and concise communication."
-  },
-  {
-    "objectID": "posts.html",
-    "href": "posts.html",
-    "title": "Posts",
-    "section": "",
-    "text": "MGTA-495 HW1: A/B Testing and Simulating Key Ideas in Frequentist Statistical Inference\n\n\nA/B Testing a Call to Action\n\n\n\n\n\n\n\n\nApr 13, 2026\n\n\nBen Kleiman\n\n\n\n\n\nNo matching items"
   },
   {
     "objectID": "projects.html",
