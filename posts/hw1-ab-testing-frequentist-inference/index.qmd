@@ -34,7 +34,7 @@ def show_table(df, caption):
 
 ## Introduction
 
-Suppose my website has a place where visitors can sign up for a newsletter. I want to test which of two calls to action gets more sign-ups.
+Suppose my website has a place where visitors can sign up for a newsletter. I want to test which of two calls to action gets more sign ups.
 
 - CTA A: **"Sign up for our newsletter here!"**
 - CTA B: **"Stay up to date by signing up!"**
