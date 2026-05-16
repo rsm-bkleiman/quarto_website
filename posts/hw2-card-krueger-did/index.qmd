@@ -2,7 +2,7 @@
 title: "Replication of Card and Krueger (1994)"
 subtitle: "Minimum Wages and Employment: A Case Study of the Fast-Food Industry in New Jersey and Pennsylvania"
 author: "Ben Kleiman"
-date: today
+date: 2026-04-22
 categories: [Economics, Causal Inference, Difference-in-Differences, Python]
 format:
   html:
