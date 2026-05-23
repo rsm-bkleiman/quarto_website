@@ -2,7 +2,7 @@
 title: "Poisson Regression and Maximum Likelihood Estimation"
 subtitle: "Does Blueprinty's Software Help Engineering Firms Win More Patents?"
 author: "Ben Kleiman"
-date: today
+date: 2026-05-15
 categories: [Statistics, Marketing Analytics, MLE, Poisson Regression, Python]
 format:
   html:
