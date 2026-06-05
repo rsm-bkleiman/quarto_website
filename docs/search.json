@@ -158,7 +158,7 @@
     "href": "projects.html",
     "title": "Projects",
     "section": "",
-    "text": "A growing collection of classwork, analyses, and portfolio projects.\n\n\n\nAnalytics Work\nCourse projects, data analyses, and dashboards will appear here as they are finalized.\n\n\nBusiness Applications\nThis section will highlight work that connects data analysis to business questions and decisions.\n\n\nMore Soon\nI am still building out this portfolio, so more detailed project writeups are on the way."
+    "text": "A growing collection of classwork, analyses, and portfolio projects.\n\n\n\nMoneyball Was a Conjoint Problem\nRevealJS slides for MGTA 490 arguing that MLB front offices implicitly run Hierarchical Bayesian conjoint analysis every offseason — using Juan Soto’s $765M deal as the case study.\nTopics: Conjoint Analysis · Hierarchical Bayes · Revealed Preference\n\n\nAnalytics Work\nCourse projects, data analyses, and dashboards will appear here as they are finalized.\n\n\nBusiness Applications\nThis section will highlight work that connects data analysis to business questions and decisions."
   },
   {
     "objectID": "posts/hw3-poisson-mle-blueprinty/index.html",
@@ -369,5 +369,376 @@
     "title": "MaxDiff Analysis of MSBA Class Preferences",
     "section": "Discussion",
     "text": "Discussion\n\n\n\n\n\n\nNote\n\n\n\n\nClose with a short discussion section that synthesizes the analysis for a non-technical reader (think: an academic advisor or a student deciding which classes to take). Cover:\n\nThe substantive finding — which MSBA classes do students prefer most? Are there any surprises?\nThe methodological finding — for what kind of question would you reach for each of the three methods?\n\nCounts: quick descriptive summary, useful for an executive dashboard\nMLE MNL: rigorous point estimates with classical standard errors; good when you need a single number to report\nBayesian MNL: when you want uncertainty on derived quantities (shares, market simulations, “what if we added a new class?” scenarios), or when you want to extend the model hierarchically to estimate individual-level preferences\n\nCaveats: the survey was on a self-selected sample of MSBA students; preferences may not generalize beyond this group. Item presentation order, prior coursework, and current standing in the program may all affect responses.\n\nEnd with one or two sentences on what you would do differently or explore next if you had more time."
+  },
+  {
+    "objectID": "Kleiman_Benjamin-maxdiff_baseball.html#the-problem-with-rating-scales",
+    "href": "Kleiman_Benjamin-maxdiff_baseball.html#the-problem-with-rating-scales",
+    "title": "What Do Baseball Fans Value Most?",
+    "section": "The Problem with Rating Scales",
+    "text": "The Problem with Rating Scales\n\n\nA traditional survey asks fans to rate each attribute 1–10.\nThe result?\n\n\n\nAttribute\nFan A\nFan B\nFan C\n\n\n\n\nClutch Performance\n9\n9\n8\n\n\nHome Run Power\n8\n9\n9\n\n\nContact Hitting\n8\n8\n9\n\n\nPlate Discipline\n8\n7\n8\n\n\nTeam Leadership\n8\n8\n7\n\n\n\nEverything clusters between 7–9. Signal: none.\n\nWhy this fails:\n\nSocial desirability bias\nScale-use differences across fans\nNo forced trade-offs\n\n\n“If you like everything equally, you’ve told me nothing.”\n\nMaxDiff forces real choices."
+  },
+  {
+    "objectID": "Kleiman_Benjamin-maxdiff_baseball.html#how-maxdiff-works",
+    "href": "Kleiman_Benjamin-maxdiff_baseball.html#how-maxdiff-works",
+    "title": "What Do Baseball Fans Value Most?",
+    "section": "How MaxDiff Works",
+    "text": "How MaxDiff Works\n\n\nInstead of ratings, show fans 4 attributes at a time and ask:\n\nWhich would you most value in a player?\nWhich would you least value?\n\nRepeat 8 times with different combinations.\n\nThink of it as a mini-tournament. Every win and loss earns a score.\n\n\nSample task:\n┌─────────────────────────────────────┐\n│  MOST ←────────────────────→ LEAST  │\n│                                     │\n│  ○  Clutch Performance          ○   │\n│  ○  Home Run Power              ○   │\n│  ○  Team Leadership             ○   │\n│  ○  Speed & Baserunning         ○   │\n└─────────────────────────────────────┘\nForcing a best and worst pick makes the data rich and honest."
+  },
+  {
+    "objectID": "Kleiman_Benjamin-maxdiff_baseball.html#our-survey",
+    "href": "Kleiman_Benjamin-maxdiff_baseball.html#our-survey",
+    "title": "What Do Baseball Fans Value Most?",
+    "section": "Our Survey",
+    "text": "Our Survey"
+  },
+  {
+    "objectID": "Kleiman_Benjamin-maxdiff_baseball.html#method-1-counts-analysis",
+    "href": "Kleiman_Benjamin-maxdiff_baseball.html#method-1-counts-analysis",
+    "title": "What Do Baseball Fans Value Most?",
+    "section": "Method 1: Counts Analysis",
+    "text": "Method 1: Counts Analysis\n\n\nThe simplest scoreboard.\n\\[\\text{score}_j = \\underbrace{\\frac{\\text{# best picks}}{\\text{# shown}}}_{\\text{% Best}} - \\underbrace{\\frac{\\text{# worst picks}}{\\text{# shown}}}_{\\text{% Worst}}\\]\nReading the score:\n\n+1 → always picked first\n−1 → always picked last\n0 → neutral or split\n\nStrength: explain it in 30 seconds. Weakness: ignores who else was on screen.\n\nThe MNL model (next slide) fixes that weakness by modeling competition among attributes — but let’s see what the raw data tells us first.\n\nIf a great attribute keeps appearing alongside two other great attributes, counts will underrate it. MNL adjusts for this automatically."
+  },
+  {
+    "objectID": "Kleiman_Benjamin-maxdiff_baseball.html#counts-results",
+    "href": "Kleiman_Benjamin-maxdiff_baseball.html#counts-results",
+    "title": "What Do Baseball Fans Really Want?",
+    "section": "Counts Results",
+    "text": "Counts Results"
+  },
+  {
+    "objectID": "Kleiman_Benjamin-maxdiff_baseball.html#method-2-mnl-via-maximum-likelihood",
+    "href": "Kleiman_Benjamin-maxdiff_baseball.html#method-2-mnl-via-maximum-likelihood",
+    "title": "What Do Baseball Fans Really Want?",
+    "section": "Method 2 — MNL via Maximum Likelihood",
+    "text": "Method 2 — MNL via Maximum Likelihood\n\n\nThe MNL knows who was on screen for every pick.\n\nBest pick — softmax over 4 attributes:\n\\[P(\\text{best} = j) = \\frac{e^{\\,\\beta_j}}{\\displaystyle\\sum_{k \\in \\text{shown}} e^{\\,\\beta_k}}\\]\n\n\nWorst pick — from the remaining 3:\n\\[P(\\text{worst} = j) = \\frac{e^{-\\beta_j}}{\\displaystyle\\sum_{k \\neq \\text{best}} e^{-\\beta_k}}\\]\n\n\nWe maximize the log-likelihood across all 640 tasks simultaneously → yields utility \\(\\hat\\beta_j\\) for each attribute.\n\n\n\nShares of preference:\n\\[\\text{share}_j = \\frac{e^{\\hat\\beta_j}}{\\sum_k e^{\\hat\\beta_k}}\\]\n\n“If all 10 attributes appeared on one screen, what fraction of picks would each get?”\n\n\n\n\n\nKey upgrade over counts:\nAttributes get credit / blame for competing against tough vs. weak opponents. It’s like strength-of-schedule adjustment."
+  },
+  {
+    "objectID": "Kleiman_Benjamin-maxdiff_baseball.html#mle-results",
+    "href": "Kleiman_Benjamin-maxdiff_baseball.html#mle-results",
+    "title": "What Do Baseball Fans Really Want?",
+    "section": "MLE Results",
+    "text": "MLE Results"
+  },
+  {
+    "objectID": "Kleiman_Benjamin-maxdiff_baseball.html#method-3-bayesian-mcmc",
+    "href": "Kleiman_Benjamin-maxdiff_baseball.html#method-3-bayesian-mcmc",
+    "title": "Where Should the Padres Spend Their Marketing Budget?",
+    "section": "Method 3 — Bayesian MCMC",
+    "text": "Method 3 — Bayesian MCMC\n\n\nMLE gives a point estimate. Bayesian analysis gives a full posterior distribution over every utility.\n\\[\\pi(\\boldsymbol\\beta \\mid \\text{data}) \\;\\propto\\; L(\\boldsymbol\\beta) \\cdot \\pi(\\boldsymbol\\beta)\\]\nPrior: \\(\\beta_j \\sim \\mathcal{N}(0, \\sqrt{10})\\) — weakly informative, lets data dominate.\nMetropolis-Hastings sampler:\n\n20,000 iterations, first 25% discarded as burn-in\nAcceptance rate: 9%   ✓ (target: 25–40%)\n\n\n\nWhy this matters for marketing decisions:\nShares of preference are nonlinear in \\(\\boldsymbol\\beta\\). The delta method approximates their uncertainty.\nWith MCMC, we push 15,000 posterior draws through the softmax and take percentiles directly — no approximation needed.\nThe 95% credible interval on each share tells you: “We’re 95% confident the true fan preference share lies here.”"
+  },
+  {
+    "objectID": "Kleiman_Benjamin-maxdiff_baseball.html#bayesian-results",
+    "href": "Kleiman_Benjamin-maxdiff_baseball.html#bayesian-results",
+    "title": "What Do Baseball Fans Really Want?",
+    "section": "Bayesian Results",
+    "text": "Bayesian Results"
+  },
+  {
+    "objectID": "Kleiman_Benjamin-maxdiff_baseball.html#three-methods-one-story",
+    "href": "Kleiman_Benjamin-maxdiff_baseball.html#three-methods-one-story",
+    "title": "What Do Baseball Fans Value Most?",
+    "section": "Three Methods, One Story",
+    "text": "Three Methods, One Story"
+  },
+  {
+    "objectID": "Kleiman_Benjamin-maxdiff_baseball.html#key-findings",
+    "href": "Kleiman_Benjamin-maxdiff_baseball.html#key-findings",
+    "title": "What Do Baseball Fans Value Most?",
+    "section": "Key Findings",
+    "text": "Key Findings\n\n\nFans rank performance over intangibles.\n🥇 Clutch Performance — the highest utility by far. Fans want players who deliver when it matters.\n🥈 Home Run Power — offensive excitement wins hearts.\n🥉 Contact Hitting — consistency is valued over raw power.\n\n📉 Team Leadership and Durability — old-school scouting favorites — rank last.\n\nFans buy tickets to see performance, not character.\n\n\nMethodology takeaways:\n\n\n\nMethod\nBest for\n\n\n\n\nCounts\nQuick summary, 30-second pitch\n\n\nMNL / MLE\nPoint estimates with SE, screen effects\n\n\nBayesian\nHonest uncertainty on shares\n\n\n\nAll three methods told the same big story — the top and bottom barely moved. Where they differed: the competitive middle cluster (Defense, Plate Discipline, Speed).\nThe bump chart shows that ranking swaps only happen in the tightly contested middle — not at the extremes where preferences are clearest."
+  },
+  {
+    "objectID": "Kleiman_Benjamin-maxdiff_baseball.html#wrap-up",
+    "href": "Kleiman_Benjamin-maxdiff_baseball.html#wrap-up",
+    "title": "What Do Baseball Fans Value Most?",
+    "section": "Wrap-Up",
+    "text": "Wrap-Up\nWhat we set out to do:\n\nDemonstrate that MaxDiff outperforms rating scales by forcing real trade-offs\nRecover fan preferences using three increasingly sophisticated estimators\nApply marketing-research methodology to a domain where preferences really matter — roster construction, fan engagement, and broadcast decisions"
+  },
+  {
+    "objectID": "Kleiman_Benjamin-maxdiff_baseball.html#section",
+    "href": "Kleiman_Benjamin-maxdiff_baseball.html#section",
+    "title": "Where Should the Padres Spend Their Marketing Budget?",
+    "section": "",
+    "text": "⚾\n\nWhere Should the Padres\n\n\nSpend Their Marketing Budget?\n\n\nMaxDiff  ·  MNL  ·  Bayesian Estimation  ·  Fan Experience Research\n\n\n\nThe question every MLB marketing team faces: limited budget, unlimited options. Which investments actually move the needle with fans?"
+  },
+  {
+    "objectID": "Kleiman_Benjamin-maxdiff_baseball.html#one-big-question",
+    "href": "Kleiman_Benjamin-maxdiff_baseball.html#one-big-question",
+    "title": "What Do Baseball Fans Really Want?",
+    "section": "One Big Question",
+    "text": "One Big Question\n\n\n\n\nIf you could only have one thing in your cleanup hitter…\n\n\n\n\n\n\n\n💣 Home Runs\n\n\n\n\n\n⚡ Clutch Hits\n\n\n\n\n\n👁 Plate Discipline\n\n\n\n\n\n🧤 Elite Defense\n\n\n\n\n\n🤝 Leadership\n\n\n\n\n\n\nMost surveys can’t answer this. Rate each 1–10 and you get… 7, 8, 8, 8, 8."
+  },
+  {
+    "objectID": "Kleiman_Benjamin-maxdiff_baseball.html#the-rating-scale-trap",
+    "href": "Kleiman_Benjamin-maxdiff_baseball.html#the-rating-scale-trap",
+    "title": "What Do Baseball Fans Really Want?",
+    "section": "The Rating Scale Trap",
+    "text": "The Rating Scale Trap\n\n\n“Please rate these player attributes from 1 to 10.”\n\n\n\n\nAttribute\nFan A\nFan B\nFan C\n\n\n\n\nClutch Performance\n9\n9\n8\n\n\nHome Run Power\n8\n9\n9\n\n\nElite Defense\n8\n8\n8\n\n\nTeam Leadership\n8\n7\n8\n\n\nDurability\n7\n8\n8\n\n\n\n\n\n\n🚨 Everything clusters at 7–9. Zero signal.\nThis is called scale-use bias — and it kills most survey data.\n\n\n\n\nWhy it happens:\n\n\nSocial desirability — nobody wants to seem like a hater\nScale anchoring — different people use “7” differently\nNo trade-offs — you never have to choose\n\n\n\n\n\n\n💡 MaxDiff forces real choices.\nWhen you have to pick a winner and loser from a set of 4, you reveal what you truly care about."
+  },
+  {
+    "objectID": "Kleiman_Benjamin-maxdiff_baseball.html#enter-maxdiff",
+    "href": "Kleiman_Benjamin-maxdiff_baseball.html#enter-maxdiff",
+    "title": "What Do Baseball Fans Really Want?",
+    "section": "Enter: MaxDiff",
+    "text": "Enter: MaxDiff\n\n\nBest-Worst Scaling — the survey design that works.\n\n\n\n\nTask 3 of 8 — Choose BEST and WORST\n\n\n◉ BEST ⚡ Clutch Performance ○ worst\n\n\n○ best 🤝 Team Leadership ◉ WORST\n\n\n○ best 🏃 Speed & Baserunning ○ worst\n\n\n○ best 🧤 Elite Defense ○ worst\n\n\n\n\n\nEach fan:\n\nSees 8 tasks, each with 4 attributes\nPicks a BEST and a WORST each time\nMakes real trade-offs under scarcity\n\n\n\n\nWhy it works:\n\n“Think of it like a mini-tournament. Every win and loss reveals a preference.”\n\nEvery choice under competition is far more informative than a rating in isolation.\n\n\n\n\n80 fans × 8 tasks × 2 picks = 1,280 preference statements from a 2-minute survey."
+  },
+  {
+    "objectID": "Kleiman_Benjamin-maxdiff_baseball.html#the-survey-10-mlb-attributes",
+    "href": "Kleiman_Benjamin-maxdiff_baseball.html#the-survey-10-mlb-attributes",
+    "title": "What Do Baseball Fans Really Want?",
+    "section": "The Survey: 10 MLB Attributes",
+    "text": "The Survey: 10 MLB Attributes\n\n\n\n⚡ Clutch Performance\n\n\n💣 Home Run Power\n\n\n🎯 Contact Hitting\n\n\n⚾ Starting Pitcher\n\n\n🧤 Elite Defense\n\n\n👁 Plate Discipline\n\n\n🏃 Speed & Baserunning\n\n\n🔒 Closing Ability\n\n\n🤝 Team Leadership\n\n\n🛡 Iron Man (Durability)\n\n\n\n\n\n::: {.stat-num}80\n\n::: {.stat-lbl}MLB fans surveyed\n\n::: ::: {.stat-box} ::: {.stat-num}8 ::: ::: {.stat-lbl}tasks per fan ::: ::: ::: {.stat-box} ::: {.stat-num}4 ::: ::: {.stat-lbl}attributes per task ::: ::: ::: {.stat-box} ::: {.stat-num}1,280 ::: ::: {.stat-lbl}preference statements ::: ::: :::"
+  },
+  {
+    "objectID": "Kleiman_Benjamin-maxdiff_baseball.html#what-would-you-guess",
+    "href": "Kleiman_Benjamin-maxdiff_baseball.html#what-would-you-guess",
+    "title": "What Do Baseball Fans Really Want?",
+    "section": "🤔 What Would YOU Guess?",
+    "text": "🤔 What Would YOU Guess?\n\n\nBefore we reveal the results… take 10 seconds.\n\n\nWhich attribute do fans value MOST?\n\n\n\n\n\nOld-school scouts would say:\n\nThe eye test\n“Heart” and “Grit”\n🤝 Leadership\n🛡 Durability (can’t win if you’re hurt)\n\n\n\n\nMoneyball would say:\n\nOn-Base Percentage\n👁 Plate Discipline\nWins Above Replacement\nDefense is undervalued\n\n\n\n\n\n\nFans said neither. The answer might surprise you. 👇"
+  },
+  {
+    "objectID": "Kleiman_Benjamin-maxdiff_baseball.html#method-1-counts-the-scoreboard",
+    "href": "Kleiman_Benjamin-maxdiff_baseball.html#method-1-counts-the-scoreboard",
+    "title": "What Do Baseball Fans Really Want?",
+    "section": "Method 1 — Counts: The Scoreboard",
+    "text": "Method 1 — Counts: The Scoreboard\n\n\n\\[\\text{score}_j = \\frac{\\text{# Best picks}}{\\text{# Shown}} - \\frac{\\text{# Worst picks}}{\\text{# Shown}}\\]\n\n\nReading the score:\n\n\n\nScore\nMeaning\n\n\n\n\n≈ +1\nAlways the crowd favorite\n\n\n≈ 0\nNeutral, or fans are split\n\n\n≈ −1\nAlways picked last\n\n\n\n\n\n\n\nStrengths:\n✅ Explain it to anyone in 30 seconds\n✅ No modeling assumptions\n✅ Bootstrap gives honest CIs\n\n\n\n\n\nOne weakness:\n❌ Doesn’t know who was on screen\n\nIf Clutch kept competing against Home Runs in the same task, it takes a hit even though it might beat most other attributes."
+  },
+  {
+    "objectID": "Kleiman_Benjamin-maxdiff_baseball.html#the-showdown-three-methods-one-story",
+    "href": "Kleiman_Benjamin-maxdiff_baseball.html#the-showdown-three-methods-one-story",
+    "title": "What Do Baseball Fans Really Want?",
+    "section": "The Showdown — Three Methods, One Story",
+    "text": "The Showdown — Three Methods, One Story\n\n\n\n\n\n\n\n\n\n\nFlat lines = methods agree. Crossing lines = only in the competitive middle — not at the extremes."
+  },
+  {
+    "objectID": "Kleiman_Benjamin-maxdiff_baseball.html#the-verdict",
+    "href": "Kleiman_Benjamin-maxdiff_baseball.html#the-verdict",
+    "title": "What Do Baseball Fans Really Want?",
+    "section": "The Verdict",
+    "text": "The Verdict\n\n\n\n\n🥇 #1   ⚡ Clutch Performance\n\nFans want ice-water veins. Full stop.\n\n\n\n\n\n\n🥈 #2   💣 Home Run Power\n\nThe highlight reel sells tickets.\n\n\n\n\n\n\n🥉 #3   🎯 Contact Hitting\n\nConsistency over raw power.\n\n\n\n\n\n\n\n📉 Dead Last:\n🛡 Iron Man (Durability) — #10\n🤝 Team Leadership — #9\n\n\n\n\n\nThe Hot Take:\nThe two things old-school scouts value most — leadership and durability — are exactly what fans care about least.\nMoneyball was right about something else entirely."
+  },
+  {
+    "objectID": "Kleiman_Benjamin-maxdiff_baseball.html#what-this-means",
+    "href": "Kleiman_Benjamin-maxdiff_baseball.html#what-this-means",
+    "title": "What Do Baseball Fans Really Want?",
+    "section": "What This Means",
+    "text": "What This Means\n\n\n\n\n\nIf you’re a…\n\n\nTakeaway\n\n\n\n\n\n\n⚾ General Manager\n\n\nFans don’t pay for Dusty Baker’s “winning culture” — they pay for the walk-off. Your analytics team already knew this, now you have fan data too.\n\n\n\n\n📺 Broadcaster / Marketer\n\n\nLead with clutch moments and home run montages. The durability angle doesn’t sell tickets.\n\n\n\n\n📊 Statistician\n\n\nThree methods, same story at the top and bottom. Differences only appear in the competitive middle — which is exactly where credible intervals matter.\n\n\n\n\n\n\n\n\n\n\n\nMethod\n\n\nBest for\n\n\nWeakness\n\n\n\n\n\n\nCounts\n\n\n30-second boardroom pitch\n\n\nIgnores screen composition\n\n\n\n\nMLE MNL\n\n\nPoint estimates with screen adjustment\n\n\nUncertainty on shares requires approximation\n\n\n\n\nBayesian\n\n\nFull, honest credible intervals on shares\n\n\nComputationally heavier"
+  },
+  {
+    "objectID": "Kleiman_Benjamin-maxdiff_baseball.html#section-1",
+    "href": "Kleiman_Benjamin-maxdiff_baseball.html#section-1",
+    "title": "Where Should the Padres Spend Their Marketing Budget?",
+    "section": "",
+    "text": "⚾\n\nThree methods. One message.\n\n\nWin games. Keep tickets affordable. Skip the app.\n\n\nMaxDiff gave the Padres’ marketing team something no focus group can: a statistically rigorous ranking of what actually drives fan attendance — with honest uncertainty estimates attached.\n\n\n\nQuestions?"
+  },
+  {
+    "objectID": "Kleiman_Benjamin-maxdiff_baseball.html#the-business-problem",
+    "href": "Kleiman_Benjamin-maxdiff_baseball.html#the-business-problem",
+    "title": "Where Should the Padres Spend Their Marketing Budget?",
+    "section": "The Business Problem",
+    "text": "The Business Problem\n\n\nMLB attendance has been under pressure:\n\nPost-pandemic recovery uneven across markets\nPadres averaged ~32k fans/game in 2024 — below capacity\nCompetition for entertainment dollars is fierce\n\nMarketing’s challenge:\n\nBudgets are finite\nOptions are endless: promotions, app upgrades, premium seating, food, events…\nGMs and CMOs disagree on what fans actually want\n\n\n\n\nThe core problem:\nWhen you ask fans to rate everything 1–10, you get back 8s and 9s for everything. Nobody says the bobblehead night is bad.\nMaxDiff forces fans to make real trade-offs — revealing what they actually care about versus what they say they care about.\n\n\n\n\nWhat we built:\nA MaxDiff survey of 100 Padres fans, measuring preferences across 10 fan experience factors — then analyzed 3 ways to validate the findings."
+  },
+  {
+    "objectID": "Kleiman_Benjamin-maxdiff_baseball.html#the-research-method-maxdiff",
+    "href": "Kleiman_Benjamin-maxdiff_baseball.html#the-research-method-maxdiff",
+    "title": "Where Should the Padres Spend Their Marketing Budget?",
+    "section": "The Research Method: MaxDiff",
+    "text": "The Research Method: MaxDiff\n\n\nBest-Worst Scaling presents fans with 4 factors at a time and asks: which matters most to your decision to attend, and which matters least?\n\n\n\nTask 4 of 8 — Most vs. Least Important\n\n\n◉ MOST 🏆 Winning / Playoff Contention ○ least\n\n\n○ most 📱 Mobile App & In-Seat Tech ◉ LEAST\n\n\n○ most 🎁 Giveaway / Promotion Nights ○ least\n\n\n○ most 💺 Premium / Club Seating ○ least\n\n\n\n\nWhy this beats rating scales:\n\nFans must trade off — no more rating everything a 9\nCompetitive context mirrors real purchasing decisions\n8 tasks per fan × 2 picks = 16 data points in 3 minutes\n\n\n\n\nThree levels of analysis:\n\n\n\nMethod\nWhat it adds\n\n\n\n\nCounts\nQuick, intuitive scoreboard\n\n\nMLE MNL\nAdjusts for who was on screen\n\n\nBayesian\nFull uncertainty on every estimate"
+  },
+  {
+    "objectID": "Kleiman_Benjamin-maxdiff_baseball.html#the-10-factors-we-tested",
+    "href": "Kleiman_Benjamin-maxdiff_baseball.html#the-10-factors-we-tested",
+    "title": "Where Should the Padres Spend Their Marketing Budget?",
+    "section": "The 10 Factors We Tested",
+    "text": "The 10 Factors We Tested\n\n\n\n\n🏆   Winning / Playoff Contention\n\n\n⭐   Star Player on the Roster\n\n\n💰   Affordable Ticket Prices\n\n\n🎁   Giveaway / Promotion Nights\n\n\n🍔   Stadium Food & Craft Beer\n\n\n\n🎆   Post-Game Fireworks\n\n\n👨‍👩‍👧   Kids & Family Activities\n\n\n💺   Premium / Club Seating\n\n\n🎵   Pre-Game Entertainment\n\n\n📱   Mobile App & In-Seat Tech\n\n\n\n\n\n::: {.n}100\n\n::: {.l}fans surveyed\n\n::: ::: {.stat} ::: {.n}8 ::: ::: {.l}tasks each ::: ::: ::: {.stat} ::: {.n}4 ::: ::: {.l}factors per task ::: ::: ::: {.stat} ::: {.n}1,600 ::: ::: {.l}preference choices ::: ::: :::"
+  },
+  {
+    "objectID": "Kleiman_Benjamin-maxdiff_baseball.html#method-1-counts-the-quick-scoreboard",
+    "href": "Kleiman_Benjamin-maxdiff_baseball.html#method-1-counts-the-quick-scoreboard",
+    "title": "Where Should the Padres Spend Their Marketing Budget?",
+    "section": "Method 1 — Counts: The Quick Scoreboard",
+    "text": "Method 1 — Counts: The Quick Scoreboard"
+  },
+  {
+    "objectID": "Kleiman_Benjamin-maxdiff_baseball.html#method-2-mnl-adding-competitive-context",
+    "href": "Kleiman_Benjamin-maxdiff_baseball.html#method-2-mnl-adding-competitive-context",
+    "title": "Where Should the Padres Spend Their Marketing Budget?",
+    "section": "Method 2 — MNL: Adding Competitive Context",
+    "text": "Method 2 — MNL: Adding Competitive Context\n\n\nThe problem with counts: it ignores who else was on screen.\nIf “Winning” kept appearing against “Star Player” in the same tasks, both get penalized — even though they’d dominate against weaker alternatives.\nThe MNL fix: model the pick probability conditional on the exact set shown.\n\\[P(\\text{most}=j) = \\frac{e^{\\beta_j}}{\\sum_{k\\in\\text{shown}} e^{\\beta_k}} \\qquad P(\\text{least}=j) = \\frac{e^{-\\beta_j}}{\\sum_{k \\neq \\text{most}} e^{-\\beta_k}}\\]\nWe maximize the log-likelihood across all 800 tasks to get \\(\\hat\\beta_j\\) for each factor.\n\n\nShares of preference translate utilities into something actionable:\n\\[\\text{share}_j = \\frac{e^{\\hat\\beta_j}}{\\sum_k e^{\\hat\\beta_k}}\\]\n\n“If all 10 factors were on one screen, what fraction of priority would each claim?”\n\nShares sum to 100% — making them a natural budget allocation guide."
+  },
+  {
+    "objectID": "Kleiman_Benjamin-maxdiff_baseball.html#mle-results-shares-of-preference",
+    "href": "Kleiman_Benjamin-maxdiff_baseball.html#mle-results-shares-of-preference",
+    "title": "Where Should the Padres Spend Their Marketing Budget?",
+    "section": "MLE Results — Shares of Preference",
+    "text": "MLE Results — Shares of Preference"
+  },
+  {
+    "objectID": "Kleiman_Benjamin-maxdiff_baseball.html#bayesian-results-full-uncertainty",
+    "href": "Kleiman_Benjamin-maxdiff_baseball.html#bayesian-results-full-uncertainty",
+    "title": "Where Should the Padres Spend Their Marketing Budget?",
+    "section": "Bayesian Results — Full Uncertainty",
+    "text": "Bayesian Results — Full Uncertainty"
+  },
+  {
+    "objectID": "Kleiman_Benjamin-maxdiff_baseball.html#rank-stability-across-all-three-methods",
+    "href": "Kleiman_Benjamin-maxdiff_baseball.html#rank-stability-across-all-three-methods",
+    "title": "Where Should the Padres Spend Their Marketing Budget?",
+    "section": "Rank Stability Across All Three Methods",
+    "text": "Rank Stability Across All Three Methods\n\n\n\n\n\n\n\n\n\n\nFlat lines = methods agree. Crossings appear only in the competitive middle — the top and bottom are stable across all three estimators."
+  },
+  {
+    "objectID": "Kleiman_Benjamin-maxdiff_baseball.html#the-marketing-implication-where-to-invest",
+    "href": "Kleiman_Benjamin-maxdiff_baseball.html#the-marketing-implication-where-to-invest",
+    "title": "Where Should the Padres Spend Their Marketing Budget?",
+    "section": "The Marketing Implication: Where to Invest",
+    "text": "The Marketing Implication: Where to Invest"
+  },
+  {
+    "objectID": "Kleiman_Benjamin-maxdiff_baseball.html#the-strategic-takeaway",
+    "href": "Kleiman_Benjamin-maxdiff_baseball.html#the-strategic-takeaway",
+    "title": "Where Should the Padres Spend Their Marketing Budget?",
+    "section": "The Strategic Takeaway",
+    "text": "The Strategic Takeaway\n\n\nWhat the data says:\n\n\n🏆 Winning + Star Player = 43% of all fan preference.\nNo promotion, fireworks show, or app feature competes with on-field performance. Marketing can’t fake its way around a losing team.\n\n\n\n\n💰 Affordable tickets rank #3. If you can’t sign Ohtani, lower the ticket prices. Accessibility outperforms premium amenities every time.\n\n\n\n\n📱 The mobile app ranks dead last. Teams spend millions on in-seat ordering tech. Fans care about it least of anything we tested.\n\n\n\n\nWhy three methods?\nAll three ranked the top 3 and bottom 3 identically — that’s what gives us confidence.\nDifferences only appeared in the competitive middle (giveaways vs. food vs. fireworks), where Bayesian credible intervals are widest and uncertainty is most honest.\n\nThe broader lesson:\n\nMaxDiff doesn’t tell the marketing team what fans say they want. It reveals what they actually choose when forced to prioritize — and those are rarely the same thing."
+  },
+  {
+    "objectID": "Weiss_Ben-moneyball_conjoint.html#section",
+    "href": "Weiss_Ben-moneyball_conjoint.html#section",
+    "title": "Moneyball Was a Conjoint Problem",
+    "section": "",
+    "text": "MGTA 490 · Marketing Research Methods\n\n\nMoneyball&lt;br&gt;\n&lt;span style=\"color:var(--gold);\"&gt;Was a&lt;/span&gt;&lt;br&gt;\nConjoint&lt;br&gt;\nProblem\n\n\nHow MLB front offices implicitly run&lt;br&gt;\n&lt;span class=\"hl\"&gt;Hierarchical Bayesian conjoint analysis&lt;/span&gt;&lt;br&gt;\nevery single offseason — without knowing it.\n\n\nBen Weiss · Rady School of Management · 2025\n\n\n\n\nTwo ways to see the same player\n\n\n&lt;div style=\"font-family:'JetBrains Mono',monospace;font-size:.58em;color:var(--gold);letter-spacing:2px;margin-bottom:10px;\"&gt;📋 SCOUTING REPORT · JUAN SOTO&lt;/div&gt;\n&lt;div style=\"display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:.72em;\"&gt;\n  &lt;div class=\"dim\"&gt;Contact Rate&lt;/div&gt;&lt;div class=\"hl\"&gt;Elite (97th pctile)&lt;/div&gt;\n  &lt;div class=\"dim\"&gt;Power (ISO)&lt;/div&gt;&lt;div class=\"hl\"&gt;Elite (.247 career)&lt;/div&gt;\n  &lt;div class=\"dim\"&gt;Defense&lt;/div&gt;&lt;div style=\"color:var(--slate);\"&gt;Average (+2 DRS)&lt;/div&gt;\n  &lt;div class=\"dim\"&gt;Age&lt;/div&gt;&lt;div class=\"hg\"&gt;26 — peak entering&lt;/div&gt;\n  &lt;div class=\"dim\"&gt;Contract Ask&lt;/div&gt;&lt;div class=\"hr\"&gt;$700M–$800M&lt;/div&gt;\n&lt;/div&gt;\n\n\n&lt;div style=\"font-family:'JetBrains Mono',monospace;font-size:.58em;color:var(--blue);letter-spacing:2px;margin-bottom:10px;\"&gt;📊 CONJOINT CHOICE SET&lt;/div&gt;\n&lt;div style=\"display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:.72em;\"&gt;\n  &lt;div class=\"dim\"&gt;Attribute A&lt;/div&gt;&lt;div class=\"hb\"&gt;Contact → Level 5&lt;/div&gt;\n  &lt;div class=\"dim\"&gt;Attribute B&lt;/div&gt;&lt;div class=\"hb\"&gt;Power → Level 5&lt;/div&gt;\n  &lt;div class=\"dim\"&gt;Attribute C&lt;/div&gt;&lt;div style=\"color:var(--slate);\"&gt;Defense → Level 3&lt;/div&gt;\n  &lt;div class=\"dim\"&gt;Attribute D&lt;/div&gt;&lt;div class=\"hg\"&gt;Age → Level 5 (young)&lt;/div&gt;\n  &lt;div class=\"dim\"&gt;Price&lt;/div&gt;&lt;div class=\"hr\"&gt;$765M / 15 yr&lt;/div&gt;\n&lt;/div&gt;\n\n\nSAME INFORMATION · DIFFERENT FRAMEWORK"
+  },
+  {
+    "objectID": "Weiss_Ben-moneyball_conjoint.html#the-4.8-billion-question",
+    "href": "Weiss_Ben-moneyball_conjoint.html#the-4.8-billion-question",
+    "title": "Moneyball Was a Conjoint Problem",
+    "section": "The $4.8 Billion Question",
+    "text": "The $4.8 Billion Question\n\nContext · Why This Matters\n\n\n\n\nMLB free agent spending — 2024–25 offseason\n\n\n$4.8B Total free agent commitments · one offseason\n\n\n\nJUAN SOTO · NEW YORK METS\n\n\n$765M · 15 Years\n\n\nLargest contract in North American sports history\n\n\n\n\nCORBIN BURNES · BALTIMORE ORIOLES\n\n\n$210M · 6 Years\n\n\n\n\nBLAKE SNELL · SAN FRANCISCO GIANTS\n\n\n$182M · 5 Years\n\n\n\n\n\n“Every team had the same public statistics. Every team could calculate the same WAR. Yet offers varied by hundreds of millions of dollars. Why?”\n\n\nThe difference isn’t information. The difference isn’t scouting access. The difference is how each team weights the attributes.\n\n\n\nThe class connection\n\n\nThis is exactly what Hierarchical Bayesian conjoint solves — it estimates individual-level utility weights rather than forcing everyone to share the same average.\n\n\n\nSources: Spotrac, MLB Trade Rumors, Baseball Reference (2024–25)"
+  },
+  {
+    "objectID": "Weiss_Ben-moneyball_conjoint.html#a-player-is-a-product-bundle",
+    "href": "Weiss_Ben-moneyball_conjoint.html#a-player-is-a-product-bundle",
+    "title": "Moneyball Was a Conjoint Problem",
+    "section": "A Player Is a Product Bundle",
+    "text": "A Player Is a Product Bundle\n\nConjoint · Choice-Based Modeling · Setup\n\n\n\n\nIn CBC conjoint, respondents choose between products defined by attribute levels. In MLB, GMs choose between players defined by performance attributes.\n\n\n\n\nAttribute\n\n\nLevels\n\n\n\n\nContact Rate\n\n\nElite · Average · Below Avg\n\n\n\n\nPower (ISO / HR)\n\n\nElite · Average · Below Avg\n\n\n\n\nDefense (DRS)\n\n\nPlus · Average · Liability\n\n\n\n\nAge\n\n\n24 · 27 · 30 · 33\n\n\n\n\nContract Length\n\n\n2 yr · 4 yr · 6 yr · 10 yr+\n\n\n\n\nInjury History\n\n\nClean · Minor · Significant\n\n\n\n\nPlatoon Splits\n\n\nNone · Moderate · Severe\n\n\n\n\nFramework adapted from standard CBC conjoint design (Sawtooth Software)\n\n\n\n\n\nStandard Conjoint Survey\n\n\nShow a respondent 3 products → they choose the best → repeat 12× → estimate part-worth utilities via max likelihood on the MNL model\n\n\n\n\nGM’s Offseason (Same Thing)\n\n\nReview available players → evaluate attribute bundles → make offers → one gets signed → repeat across 30 teams over 20+ years\n\n\n\n\nThe Problem With WAR\n\n\nWAR uses league-average part-worth weights for every team. But 30 teams with 30 different roster needs, market sizes, and timelines are not average."
+  },
+  {
+    "objectID": "Weiss_Ben-moneyball_conjoint.html#aggregate-logit-vs.-hierarchical-bayes",
+    "href": "Weiss_Ben-moneyball_conjoint.html#aggregate-logit-vs.-hierarchical-bayes",
+    "title": "Moneyball Was a Conjoint Problem",
+    "section": "Aggregate Logit vs. Hierarchical Bayes",
+    "text": "Aggregate Logit vs. Hierarchical Bayes\n\nThe Core Statistical Argument\n\n\n\nWAR is an aggregate logit model — one set of weights, applied to every team. HB estimates individual-level utilities per respondent. In a market of 30 buyers, individual-level is the entire game.\n\n\n\n\n📊 Aggregate WAR Model\n\n\nOne fixed set of attribute weights.&lt;br&gt;\nApplied identically to all 30 teams.&lt;br&gt;\nA 72-win rebuilder and a 95-win contender get the &lt;span class=\"hl\"&gt;exact same player valuation.&lt;/span&gt;&lt;br&gt;&lt;br&gt;\nThis is aggregate logit. It describes&lt;br&gt;no individual team accurately.\n\n\n\n\n🧠 Hierarchical Bayes\n\n\nEach GM = one respondent.&lt;br&gt;\nEach transaction = one observed choice.&lt;br&gt;\nPart-worths estimated &lt;span class=\"hg\"&gt;per team,&lt;/span&gt; informed by but not forced to the league average.&lt;br&gt;&lt;br&gt;\nTampa Bay's weights look nothing&lt;br&gt;like New York's. HB captures both.\n\n\n\n\n⚠️ What Gets Lost\n\n\nA rebuilder values &lt;span class=\"hl\"&gt;youth over production.&lt;/span&gt;&lt;br&gt;\nA contender values &lt;span class=\"hl\"&gt;proven over upside.&lt;/span&gt;&lt;br&gt;\nA small-market team values &lt;span class=\"hl\"&gt;OBP over power.&lt;/span&gt;&lt;br&gt;&lt;br&gt;\nAveraging across teams destroys&lt;br&gt;the signal that matters most.\n\n\n\n\n\nAnalogy from class: Aggregate logit gives you the “average customer.” HB gives you every customer individually. For a 30-team market, the average is nearly useless.\n\n\nWhy HB works here: We have rich data per team (decades of transactions), a natural hierarchy (teams within the league), and clear heterogeneity in behavior. Textbook HB conditions."
+  },
+  {
+    "objectID": "Weiss_Ben-moneyball_conjoint.html#revealed-preference-no-survey-needed",
+    "href": "Weiss_Ben-moneyball_conjoint.html#revealed-preference-no-survey-needed",
+    "title": "Moneyball Was a Conjoint Problem",
+    "section": "Revealed Preference: No Survey Needed",
+    "text": "Revealed Preference: No Survey Needed\n\nRevealed Preference · Discrete Choice · Data Strategy\n\n\n\n\nWe don’t ask GMs what they value. We infer it from what they actually paid for. Actual transactions are revealed preferences — the gold standard over stated preferences.\n\n\n\n📋 Player enters free agencyKnown attribute bundle: contact · power · age · defense · health\n\n\n↓\n\n\n🤝 GM makes offer / completes tradeChoice observed → equivalent to a survey response\n\n\n↓\n\n\n💰 Contract value becomes the price paidAAV = revealed willingness to pay for that bundle\n\n\n↓\n\n\n📐 Regress AAV on player attributes · by teamResiduals from WAR-controlled regression = implicit part-worth gaps\n\n\n\nResiduals clustering by team identity is the empirical signature of heterogeneous utility weights — the key HB insight.\n\n\n\n\nImplied attribute weights · illustrative\n\n\n⚾ Tampa Bay Rays — Small Market, Rebuild Mode\n\n\n\nOBP / Walk Rate\n\n\n\nVery High\n\n\n\n\n\nDefense (DRS)\n\n\n\nHigh\n\n\n\n\n\nAge — Youth Premium\n\n\n\nDominant Weight\n\n\n\n\n\nRaw Power / HR Rate\n\n\n\nLow\n\n\n\n\n\nContract Length\n\n\n\nAvoid\n\n\n\n\n⚾ New York Yankees — Large Market, Win-Now\n\n\n\nRaw Power (HR / ISO)\n\n\n\nDominant Weight\n\n\n\n\n\nName Recognition / Star Power\n\n\n\nHigh\n\n\n\n\n\nProven Track Record\n\n\n\nHigh\n\n\n\n\n\nYouth / Age Premium\n\n\n\nLower Priority\n\n\n\n\n\nContract Length\n\n\n\nAccepted"
+  },
+  {
+    "objectID": "Weiss_Ben-moneyball_conjoint.html#same-player-four-price-tags",
+    "href": "Weiss_Ben-moneyball_conjoint.html#same-player-four-price-tags",
+    "title": "Moneyball Was a Conjoint Problem",
+    "section": "Same Player, Four Price Tags",
+    "text": "Same Player, Four Price Tags\n\nIndividual-Level Part-Worth Utilities · HB Output in Action\n\n\n\nJuan Soto free agency 2024 — reported offers varied by over $200M despite every team having identical public statistics. HB explains why.\n\n\n\n\n⚾ DODGERS\n\n\n~$700M\n\n\n&lt;span class=\"hl\"&gt;Top weight:&lt;/span&gt; Championship probability multiplier&lt;br&gt;\nSoto as final piece of dynasty window&lt;br&gt;\nStar power coefficient: &lt;span class=\"hl\"&gt;+1.4×&lt;/span&gt;\n\n\n\n\nWON THE BID\n\n\n⚾ METS\n\n\n$765M\n\n\n&lt;span class=\"hg\"&gt;Top weight:&lt;/span&gt; Fanbase re-engagement value&lt;br&gt;\nRevenue recovery post-rebuild era&lt;br&gt;\nOff-field brand premium: &lt;span class=\"hg\"&gt;+$80M&lt;/span&gt;\n\n\n\n\n⚾ RED SOX\n\n\n~$600M\n\n\n&lt;span class=\"dim\"&gt;Top weight:&lt;/span&gt; On-field WAR production only&lt;br&gt;\nConservative long-term injury discount&lt;br&gt;\nRisk penalty applied: &lt;span class=\"dim\"&gt;−$100M&lt;/span&gt;\n\n\n\n\n⚾ YANKEES\n\n\n~$560M\n\n\n&lt;span class=\"dim\"&gt;Top weight:&lt;/span&gt; Short contention window only&lt;br&gt;\nCore roster already locked long-term&lt;br&gt;\nLength discount: &lt;span class=\"hr\"&gt;−$140M&lt;/span&gt;\n\n\n\n\nSame WAR. Same Statcast data. Same public scouting reports. Four completely different utility functions. That is Hierarchical Bayes in action — individual-level part-worths, not a league-average answer."
+  },
+  {
+    "objectID": "Weiss_Ben-moneyball_conjoint.html#the-moneyball-arbitrage",
+    "href": "Weiss_Ben-moneyball_conjoint.html#the-moneyball-arbitrage",
+    "title": "Moneyball Was a Conjoint Problem",
+    "section": "The Moneyball Arbitrage",
+    "text": "The Moneyball Arbitrage\n\nMarket Inefficiency · Conjoint Residuals · Historical Case\n\n\n\n\nMoneyball reframed: Oakland didn’t just find undervalued stats. They found attributes where the market’s aggregate part-worth weights were systematically wrong — and exploited the pricing gap.\n\n\nMarket weights in 2002 — what teams paid for\n\n\n\nBatting Average\n\n\n\nOvervalued\n\n\n\n\n\nRBI · “Clutch” reputation\n\n\n\nOvervalued\n\n\n\n\n\nStolen Bases · Speed\n\n\n\nOvervalued\n\n\n\n\n\nOn-Base Percentage (OBP)\n\n\n\nUnderpriced\n\n\n\n\n\nWalk Rate\n\n\n\nDeeply Underpriced\n\n\n\n\nWhat actually won games\n\n\n\nOn-Base Percentage (OBP)\n\n\n\nMost Predictive\n\n\n\n\n\nWalk Rate\n\n\n\nHigh Impact\n\n\n\n\n\nBatting Average\n\n\n\nModerate · Overpriced\n\n\n\n\n\n\n\nThe Conjoint Arbitrage Logic\n\n\nWhen the &lt;span class=\"hl\"&gt;market's aggregate part-worths misprice an attribute,&lt;/span&gt; the team with better individual-level utility estimates can acquire that attribute &lt;span class=\"hl\"&gt;below its true contribution to winning.&lt;/span&gt;&lt;br&gt;&lt;br&gt;\nGap between market weights and true weights = &lt;span class=\"hg\"&gt;the inefficiency to exploit.&lt;/span&gt;\n\n\n\n\nToday’s Frontier (Gap Has Closed)\n\n\nThe OBP mispricing closed by 2010. Modern arbitrage targets: &lt;span class=\"hl\"&gt;biomechanical injury prediction, spin rate aging curves, catcher framing, pitch tunneling.&lt;/span&gt; Same conjoint logic — find where market weights are still wrong.\n\n\n\nLewis, M. (2003). Moneyball. Norton.  |  Baumer & Zimbalist (2014). The Sabermetric Revolution."
+  },
+  {
+    "objectID": "Weiss_Ben-moneyball_conjoint.html#bringing-it-back-to-class",
+    "href": "Weiss_Ben-moneyball_conjoint.html#bringing-it-back-to-class",
+    "title": "Moneyball Was a Conjoint Problem",
+    "section": "Bringing It Back to Class",
+    "text": "Bringing It Back to Class\n\nConjoint · Hierarchical Bayes · Revealed Preference · Full Synthesis\n\n\n\n\n\nClass Concept\n\n\nTextbook Application\n\n\nMLB Translation\n\n\n\n\nCBC Conjoint\n\n\nRespondents choose between product attribute bundles\n\n\nGMs choose between player attribute bundles each offseason\n\n\n\n\nHierarchical Bayes\n\n\nIndividual part-worth utilities per respondent\n\n\nEach team has its own implied attribute weights from its transaction history\n\n\n\n\nAggregate Logit\n\n\nOne weight set averaged across all respondents\n\n\nWAR — one number, fixed weights, same for every team regardless of context\n\n\n\n\nRevealed Preference\n\n\nInfer utilities from observed choices, not surveys\n\n\nUse contract AAV + player attributes to back out part-worths from real transactions\n\n\n\n\nMarket Inefficiency\n\n\nGap between market price and true utility = arbitrage window\n\n\nMoneyball exploited the OBP mispricing; today teams seek the next gap\n\n\n\n\nThe GM’s offseason is a conjoint problem. The scouting report is a choice set. The contract is revealed preference. Hierarchical Bayes is how you estimate individual-level utilities — without ever running a survey."
+  },
+  {
+    "objectID": "Weiss_Ben-moneyball_conjoint.html#section-1",
+    "href": "Weiss_Ben-moneyball_conjoint.html#section-1",
+    "title": "Moneyball Was a Conjoint Problem",
+    "section": "",
+    "text": "The Takeaway\n\n\nBilly Beane Didn’t Invent Analytics.\n\n\nHe Just Ran the Regression.\n\n\nEvery front office has always been solving a conjoint problem. The ones who first understood individual-level utility estimation — and found where the market’s aggregate weights were wrong — won.\n\n\n\nCONJOINT\n\n\nHIERARCHICAL BAYES\n\n\nREVEALED PREFERENCE"
+  },
+  {
+    "objectID": "Kleiman_Ben-moneyball_conjoint.html#section",
+    "href": "Kleiman_Ben-moneyball_conjoint.html#section",
+    "title": "Ben Kleiman",
+    "section": "",
+    "text": "MGTA 495 · Marketing Research Methods\n\n\nMoneyballWas aConjointProblem\n\n\nHow MLB front offices implicitly runHierarchical Bayesian conjoint analysisevery offseason — without knowing it.\n\n\nBen Kleiman · Rady School of Management · 2026\n\n\n\n\nTwo ways to see the same player\n\n\n\n📋 SCOUTING REPORT · JUAN SOTO\n\n\n\nContact Rate\n\n\nElite (97th pctile)\n\n\nPower (ISO)\n\n\nElite (.247 career)\n\n\nDefense\n\n\nAverage (+2 DRS)\n\n\nAge\n\n\n26 — peak entering\n\n\nContract Ask\n\n\n$700M–$800M\n\n\n\n\n\n📊 CONJOINT CHOICE SET\n\n\n\nAttribute A\n\n\nContact → Level 5\n\n\nAttribute B\n\n\nPower → Level 5\n\n\nAttribute C\n\n\nDefense → Level 3\n\n\nAttribute D\n\n\nAge → Level 5 (young)\n\n\nPrice\n\n\n$765M / 15 yr\n\n\n\n\nSAME INFORMATION · DIFFERENT FRAMEWORK"
+  },
+  {
+    "objectID": "Kleiman_Ben-moneyball_conjoint.html#the-4.8-billion-question",
+    "href": "Kleiman_Ben-moneyball_conjoint.html#the-4.8-billion-question",
+    "title": "Ben Kleiman",
+    "section": "The $4.8 Billion Question",
+    "text": "The $4.8 Billion Question\n\nContext · Why This Matters\n\n\n\n\nMLB free agent spending — 2024–25 offseason\n\n\n$4.8BTotal free agent commitments · one offseason\n\n\n\nJUAN SOTO · NEW YORK METS\n\n\n$765M · 15 Years\n\n\nLargest contract in North American sports history\n\n\n\n\nCORBIN BURNES · ARIZONA DIAMONDBACKS\n\n\n$210M · 6 Years\n\n\n\n\nBLAKE SNELL · LOS ANGELES DODGERS\n\n\n$182M · 5 Years\n\n\n\n\n\n“Every team had the same public statistics. Every team could calculate the same WAR. Yet Soto offers varied by over $200M. Why?”\n\n\nThe difference isn’t information.The difference isn’t scouting access.The difference is how each teamweights the attributes.\n\n\n\nThe class connection\n\n\nHierarchical Bayesian conjoint estimates individual-level utility weights rather than forcing every team to share the same average β.\n\n\n\nSources: Spotrac · MLB Trade Rumors · Baseball Reference (2024–25)"
+  },
+  {
+    "objectID": "Kleiman_Ben-moneyball_conjoint.html#a-player-is-a-product-bundle",
+    "href": "Kleiman_Ben-moneyball_conjoint.html#a-player-is-a-product-bundle",
+    "title": "Ben Kleiman",
+    "section": "A Player Is a Product Bundle",
+    "text": "A Player Is a Product Bundle\n\nConjoint · Choice-Based Modeling · Setup\n\n\n\n\nIn CBC conjoint, respondents choose between products defined by attribute levels. In MLB, GMs choose between players defined by performance attributes.\n\n\n\n\nAttribute\n\n\nLevels\n\n\n\n\nContact Rate\n\n\nElite · Average · Below Avg\n\n\n\n\nPower (ISO / HR)\n\n\nElite · Average · Below Avg\n\n\n\n\nDefense (DRS)\n\n\nPlus · Average · Liability\n\n\n\n\nAge\n\n\n24 · 27 · 30 · 33\n\n\n\n\nContract Length\n\n\n2 yr · 4 yr · 6 yr · 10 yr+\n\n\n\n\nInjury History\n\n\nClean · Minor · Significant\n\n\n\n\nFramework adapted from standard CBC conjoint design (Sawtooth Software)\n\n\n\n\n\nStandard Conjoint Survey\n\n\nShow 3 products → respondent picks best → repeat 12× → MNL model recovers part-worth utilities via max likelihood\n\n\n\n\nGM’s Offseason (Same Thing)\n\n\nReview players → evaluate bundles → make offers → one gets signed → repeat across 30 teams, 20+ years of transactions\n\n\n\n\nThe Problem With WAR\n\n\nWAR applies league-average part-worth weights to every team. But 30 teams with different needs, markets, and timelines are not average."
+  },
+  {
+    "objectID": "Kleiman_Ben-moneyball_conjoint.html#aggregate-logit-vs.-hierarchical-bayes",
+    "href": "Kleiman_Ben-moneyball_conjoint.html#aggregate-logit-vs.-hierarchical-bayes",
+    "title": "Moneyball Was a Conjoint Problem",
+    "section": "Aggregate Logit vs. Hierarchical Bayes",
+    "text": "Aggregate Logit vs. Hierarchical Bayes\n\nThe Core Statistical Argument\n\n\n\nWAR is an aggregate logit model — one set of weights, applied to every team. HB estimates individual-level utilities per respondent. In a market of 30 buyers, individual-level is the entire game.\n\n\n\n\n📊 Aggregate WAR Model\n\n\nOne fixed set of attribute weights.&lt;br&gt;\nApplied identically to all 30 teams.&lt;br&gt;\nA 72-win rebuilder and a 95-win contender get the &lt;span class=\"hl\"&gt;exact same player valuation.&lt;/span&gt;&lt;br&gt;&lt;br&gt;\nThis is aggregate logit. It describes&lt;br&gt;no individual team accurately.\n\n\n\n\n🧠 Hierarchical Bayes\n\n\nEach GM = one respondent.&lt;br&gt;\nEach transaction = one observed choice.&lt;br&gt;\nPart-worths estimated &lt;span class=\"hg\"&gt;per team,&lt;/span&gt; informed by but not forced to the league average.&lt;br&gt;&lt;br&gt;\nTampa Bay's weights look nothing&lt;br&gt;like New York's. HB captures both.\n\n\n\n\n⚠️ What Gets Lost\n\n\nA rebuilder values &lt;span class=\"hl\"&gt;youth over production.&lt;/span&gt;&lt;br&gt;\nA contender values &lt;span class=\"hl\"&gt;proven over upside.&lt;/span&gt;&lt;br&gt;\nA small-market team values &lt;span class=\"hl\"&gt;OBP over power.&lt;/span&gt;&lt;br&gt;&lt;br&gt;\nAveraging across teams destroys&lt;br&gt;the signal that matters most.\n\n\n\n\n\nAnalogy from class: Aggregate logit gives you the “average customer.” HB gives you every customer individually. For a 30-team market, the average is nearly useless.\n\n\nWhy HB works here: We have rich data per team (decades of transactions), a natural hierarchy (teams within the league), and clear heterogeneity in behavior. Textbook HB conditions."
+  },
+  {
+    "objectID": "Kleiman_Ben-moneyball_conjoint.html#revealed-preference-no-survey-needed",
+    "href": "Kleiman_Ben-moneyball_conjoint.html#revealed-preference-no-survey-needed",
+    "title": "Ben Kleiman",
+    "section": "Revealed Preference: No Survey Needed",
+    "text": "Revealed Preference: No Survey Needed\n\nRevealed Preference · Discrete Choice · Data Strategy\n\n\n\n\nWe don’t ask GMs what they value — we infer it from what they actually paid for. Transactions are revealed preferences, the gold standard over stated preferences.\n\n\n\n📋 Player enters free agencyKnown bundle: contact · power · age · defense · health\n\n\n↓\n\n\n🤝 GM makes offer / completes tradeChoice observed → one survey response\n\n\n↓\n\n\n💰 Contract AAV = revealed willingness to payPrice attribute is the signed contract value\n\n\n↓\n\n\n📐 Regress AAV on attributes · by teamResiduals vs. WAR = implicit part-worth gaps per team\n\n\n\n\n\n\nWhy This Works\n\n\nEach free agency = one CBC choice taskEach team = one HB respondentDecades of transactions = thousands of “responses”Richer than any survey we could design.\n\n\n\n\nThe Key Empirical Signal\n\n\nFit: AAV ~ WAR + attributes + team_FEIf residuals cluster by team identity, that is direct evidence of heterogeneous β — exactly the signature HB captures.\n\n\n\n\nStated vs. Revealed\n\n\nSurveys capture what GMs say they value. Contracts capture what they actually pay for. Real money → far more reliable utility signal.\n\n\n\nAnalogous to IRI scanner data — revealed preference at massive scale."
+  },
+  {
+    "objectID": "Kleiman_Ben-moneyball_conjoint.html#same-player-four-price-tags",
+    "href": "Kleiman_Ben-moneyball_conjoint.html#same-player-four-price-tags",
+    "title": "Ben Kleiman",
+    "section": "Same Player, Four Price Tags",
+    "text": "Same Player, Four Price Tags\n\nIndividual-Level Part-Worth Utilities · HB in Action\n\n\nJuan Soto 2024 — bids varied by over $200M despite identical public data. Each reflects a different β vector on the same attribute bundle.\n\n\n\n\n⚾ DODGERS\n\n\n~$700M\n\n\nβ_champ: Championship multiplierSoto = final dynasty pieceStar power coeff: +1.4×β_age very high at 26\n\n\n\n\nWON THE BID\n\n\n⚾ METS\n\n\n$765M\n\n\nβ_fanbase: Revenue recoveryPost-rebuild re-engagementOff-field premium: +$80MOwner mandate to spend\n\n\n\n\n⚾ RED SOX\n\n\n~$600M\n\n\nβ_WAR: On-field value onlyConservative injury discountRisk penalty: −$100MAnalytics-first culture\n\n\n\n\n⚾ YANKEES\n\n\n$760M\n\n\nβ_length: 16-year term offered$5M less, one extra yearLost by a razor marginSoto chose 15 yrs / Mets\n\n\n\n\n\nSame WAR. Same Statcast. Same scouting report. Four completely different utility functions. Individual-level β, not a league-average answer.\n\n\nThe $5M difference between Yankees ($760M / 16 yr) and Mets ($765M / 15 yr) shows that term structure — not just total dollars — is its own attribute with its own β. Soto’s preference for fewer years is itself a revealed preference signal."
+  },
+  {
+    "objectID": "Kleiman_Ben-moneyball_conjoint.html#the-moneyball-arbitrage",
+    "href": "Kleiman_Ben-moneyball_conjoint.html#the-moneyball-arbitrage",
+    "title": "Ben Kleiman",
+    "section": "The Moneyball Arbitrage",
+    "text": "The Moneyball Arbitrage\n\nMarket Inefficiency · Conjoint Residuals · Historical Case\n\n\n\n\nOakland found attributes where the market’s aggregate β were systematically wrong — and bought those attributes below their true contribution to winning.\n\n\nMarket β in 2002 — what teams paid for\n\n\n\nBatting Average\n\n\n\nOvervalued\n\n\n\n\n\nRBI / “Clutch” reputation\n\n\n\nOvervalued\n\n\n\n\n\nStolen Bases / Speed\n\n\n\nOvervalued\n\n\n\n\n\nOBP / Walk Rate\n\n\n\nUnderpriced\n\n\n\n\nTrue β — what actually won games\n\n\n\nOBP / Walk Rate\n\n\n\nMost Predictive of Runs\n\n\n\n\n\nBatting Average\n\n\n\nModerate · Overpriced\n\n\n\n\n\nStolen Bases\n\n\n\nLow Marginal Value\n\n\n\n\n\n\n\nThe Conjoint Arbitrage Logic\n\n\nWhen the market’s aggregate β misprice an attribute, the team with better individual-level estimates acquires it below its true contribution to winning.Gap between market β and true β = the inefficiency to exploit. Oakland’s OBP edge produced ~40 extra WAR at below-market cost in 2002.\n\n\n\n\nToday’s Frontier (OBP Gap Has Closed)\n\n\nModern arbitrage: biomechanical injury prediction, spin rate aging curves, catcher framing, pitch tunneling, swing decisions. Same conjoint logic — find where the market’s β are still systematically wrong.\n\n\n\nLewis (2003). Moneyball. | Baumer & Zimbalist (2014). The Sabermetric Revolution."
+  },
+  {
+    "objectID": "Kleiman_Ben-moneyball_conjoint.html#bringing-it-back-to-class",
+    "href": "Kleiman_Ben-moneyball_conjoint.html#bringing-it-back-to-class",
+    "title": "Ben Kleiman",
+    "section": "Bringing It Back to Class",
+    "text": "Bringing It Back to Class\n\nConjoint · Hierarchical Bayes · Revealed Preference · Full Synthesis\n\n\n\n\n\nClass Concept\n\n\nTextbook Application\n\n\nMLB Translation\n\n\n\n\nCBC Conjoint\n\n\nRespondents choose between product attribute bundles\n\n\nGMs choose between player attribute bundles each offseason\n\n\n\n\nHierarchical Bayes\n\n\nIndividual part-worth utilities per respondent, pooled to population\n\n\nEach team has its own β vector, pooled toward the league average\n\n\n\n\nAggregate Logit\n\n\nOne weight set averaged across all respondents\n\n\nWAR — fixed β̄, same for every team regardless of roster or market\n\n\n\n\nRevealed Preference\n\n\nInfer utilities from observed choices, not surveys\n\n\nContract AAV + player attributes → recover β from real transactions\n\n\n\n\nMarket Inefficiency\n\n\nGap between market price and true utility = arbitrage window\n\n\nMoneyball exploited OBP mispricing; today teams hunt the next gap\n\n\n\n\nWillingness to Pay\n\n\nMax price a buyer pays for an additional unit of an attribute\n\n\nThe $205M bid spread = different WTP for the same Soto bundle\n\n\n\n\nThe GM’s offseason is a conjoint problem. The scouting report is a choice set. The contract is revealed preference. HB estimates individual-level utilities — without ever running a survey."
+  },
+  {
+    "objectID": "Kleiman_Ben-moneyball_conjoint.html#section-1",
+    "href": "Kleiman_Ben-moneyball_conjoint.html#section-1",
+    "title": "Ben Kleiman",
+    "section": "",
+    "text": "The Takeaway\n\n\nBilly BeaneDidn’t InventAnalytics.\n\n\nHe Just Ran the Regression.\n\n\nEvery front office has always been solving a conjoint problem.The teams who understood individual-level utility estimation — and found where the market’s aggregate β were wrong — captured the arbitrage.The method formalizes what GMs did by intuition. The advantage goes to whoever builds the better model first.\n\n\n\nCONJOINT\n\n\nHIERARCHICAL BAYES\n\n\nREVEALED PREFERENCE"
+  },
+  {
+    "objectID": "Kleiman_Ben-moneyball_conjoint.html#war-vs.-hierarchical-bayes",
+    "href": "Kleiman_Ben-moneyball_conjoint.html#war-vs.-hierarchical-bayes",
+    "title": "Ben Kleiman",
+    "section": "WAR vs. Hierarchical Bayes",
+    "text": "WAR vs. Hierarchical Bayes\n\nThe Statistical Core\n\n\n\n\n📊 WAR — Aggregate Logit\n\n\nWAR_j = β̄₁·contact + β̄₂·power       + β̄₃·defense + β̄₄·age\n\n\nβ̄ = fixed league-average weights, applied identically to all 30 teams. A rebuilder and a contender get the exact same player valuation.\n\n\n✗ 30 heterogeneous buyers treated as one homogeneous market\n\n\n\n\n🧠 Hierarchical Bayes Conjoint\n\n\nU_jt = β_1t·contact + β_2t·power      + β_3t·defense + β_4t·ageβ_t ~ N(β̄, Σ)\n\n\nβ_t = per-team weights, pooled toward the league mean but unique per team. Tampa Bay’s β ≠ New York’s β. HB recovers both simultaneously.\n\n\n✓ Individual utility weights estimated for every buyer in the market\n\n\n\n\nThe HB prior β̄ is the league average — the WAR signal. The posterior β_t is each team’s true preference, regularized toward that mean."
+  },
+  {
+    "objectID": "Kleiman_Ben-moneyball_conjoint.html#teams.-30-different-β-vectors.",
+    "href": "Kleiman_Ben-moneyball_conjoint.html#teams.-30-different-β-vectors.",
+    "title": "Ben Kleiman",
+    "section": "30 Teams. 30 Different β Vectors.",
+    "text": "30 Teams. 30 Different β Vectors.\n\nHB Output · Individual-Level Part-Worth Weights\n\n\nHB returns one β vector per team — regularized toward the league mean but free to deviate. Each row is a different posterior β. The column variation is the point.\n\n\n\n\n\n\nContact / OBP\n\n\nPower / HR\n\n\nDefense\n\n\nYouth\n\n\nHealth\n\n\n⚾ Rays\n\n\nHigh\n\n\nLow\n\n\nHigh\n\n\nDominant\n\n\nHigh\n\n\n⚾ Yankees\n\n\nMedium\n\n\nDominant\n\n\nAvoid\n\n\nLow\n\n\nMedium\n\n\n⚾ Mets\n\n\nMedium\n\n\nHigh\n\n\nLow\n\n\nMedium\n\n\nLow\n\n\n⚾ Red Sox\n\n\nHigh\n\n\nMedium\n\n\nMedium\n\n\nMedium\n\n\nDominant\n\n\n⚾ Dodgers\n\n\nDominant\n\n\nHigh\n\n\nMedium\n\n\nHigh\n\n\nHigh\n\n\n⚾ Astros\n\n\nHigh\n\n\nHigh\n\n\nHigh\n\n\nMedium\n\n\nMedium\n\n\n\n\nRays: Youth β dominates — develop cheap young athletes, maximize future flexibility over present production.\n\n\nYankees: Power sells seats. Defense is replaceable cheaply. Stars only, long contracts accepted.\n\n\nDodgers: Best analytics in baseball — balanced β with no systematic blind spots."
   }
 ]

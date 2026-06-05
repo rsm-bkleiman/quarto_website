@@ -1,0 +1,324 @@
+---
+format:
+  revealjs:
+    embed-resources: true
+    theme: dark
+    transition: fade
+    transition-speed: slow
+    slide-number: c/t
+    progress: true
+    chalkboard: false
+    width: 1280
+    height: 720
+    margin: 0.04
+    footer: "MGTA 495 · Ben Kleiman · 2026"
+    include-in-header:
+      - slides-head.html
+---
+
+## {background-color="#060e1a"}
+
+<div style="display:flex;gap:36px;align-items:center;padding-top:6px;">
+
+<div style="flex:1.1;">
+<div style="font-family:'JetBrains Mono',monospace;font-size:.5em;color:#7a5a0a;letter-spacing:3px;text-transform:uppercase;margin-bottom:8px;">MGTA 495 · Marketing Research Methods</div>
+<div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:2.6em;line-height:.95;color:#f1f5f9;margin-bottom:14px;">Moneyball<br><span style="color:#e2aa20;">Was a</span><br>Conjoint<br>Problem</div>
+<div style="font-size:.78em;color:#94a3b8;line-height:1.6;max-width:420px;">How MLB front offices implicitly run<br><span style="color:#f5cc50;font-weight:600;">Hierarchical Bayesian conjoint analysis</span><br>every offseason — without knowing it.</div>
+<div style="margin-top:14px;font-size:.62em;color:#475569;">Ben Kleiman · Rady School of Management · 2026</div>
+</div>
+
+<div style="flex:1;display:flex;flex-direction:column;gap:10px;">
+<div style="font-family:'JetBrains Mono',monospace;font-size:.5em;color:#e2aa20;letter-spacing:2px;text-transform:uppercase;margin-bottom:2px;">Two ways to see the same player</div>
+<div class="card card-g">
+<div style="font-family:'JetBrains Mono',monospace;font-size:.52em;color:#e2aa20;letter-spacing:1.5px;margin-bottom:6px;">📋 SCOUTING REPORT · JUAN SOTO</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:.66em;">
+<div class="dim">Contact Rate</div><div class="hl">Elite (97th pctile)</div>
+<div class="dim">Power (ISO)</div><div class="hl">Elite (.247 career)</div>
+<div class="dim">Defense</div><div style="color:#94a3b8;">Average (+2 DRS)</div>
+<div class="dim">Age</div><div class="hg">26 — peak entering</div>
+<div class="dim">Contract Ask</div><div class="hr">$700M–$800M</div>
+</div>
+</div>
+<div class="card card-b">
+<div style="font-family:'JetBrains Mono',monospace;font-size:.52em;color:#3b82f6;letter-spacing:1.5px;margin-bottom:6px;">📊 CONJOINT CHOICE SET</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:.66em;">
+<div class="dim">Attribute A</div><div class="hb">Contact → Level 5</div>
+<div class="dim">Attribute B</div><div class="hb">Power → Level 5</div>
+<div class="dim">Attribute C</div><div style="color:#94a3b8;">Defense → Level 3</div>
+<div class="dim">Attribute D</div><div class="hg">Age → Level 5 (young)</div>
+<div class="dim">Price</div><div class="hr">$765M / 15 yr</div>
+</div>
+</div>
+<div style="font-family:'JetBrains Mono',monospace;font-size:.48em;color:#7a5a0a;text-align:center;letter-spacing:2px;">SAME INFORMATION · DIFFERENT FRAMEWORK</div>
+</div>
+
+</div>
+
+---
+
+## The $4.8 Billion Question {background-color="#060e1a"}
+
+<div class="tag">Context · Why This Matters</div>
+
+<div class="two-col" style="margin-top:6px;">
+<div>
+<div style="font-size:.64em;color:var(--slate);margin-bottom:6px;">MLB free agent spending — 2024–25 offseason</div>
+<div class="big" style="margin-bottom:10px;"><span class="n">$4.8B</span><span class="l">Total free agent commitments · one offseason</span></div>
+<div class="card card-g" style="margin-bottom:5px;">
+<div style="font-family:'JetBrains Mono',monospace;font-size:.54em;color:var(--slate);margin-bottom:2px;">JUAN SOTO · NEW YORK METS</div>
+<div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:1.7em;color:var(--gold2);">$765M · 15 Years</div>
+<div style="font-size:.58em;color:var(--slate);">Largest contract in North American sports history</div>
+</div>
+<div class="card card-s" style="margin-bottom:5px;">
+<div style="font-family:'JetBrains Mono',monospace;font-size:.54em;color:var(--slate);margin-bottom:2px;">CORBIN BURNES · ARIZONA DIAMONDBACKS</div>
+<div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:1.7em;color:var(--white);">$210M · 6 Years</div>
+</div>
+<div class="card card-s">
+<div style="font-family:'JetBrains Mono',monospace;font-size:.54em;color:var(--slate);margin-bottom:2px;">BLAKE SNELL · LOS ANGELES DODGERS</div>
+<div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:1.7em;color:var(--white);">$182M · 5 Years</div>
+</div>
+</div>
+<div>
+<div class="pq" style="margin-bottom:10px;">"Every team had the <span class="hl">same public statistics.</span> Every team could calculate the same WAR. Yet Soto offers varied by <span class="hr">over $200M.</span> Why?"</div>
+<div style="font-size:.76em;line-height:1.8;color:var(--slate);margin-bottom:10px;">The difference isn't <span class="hl">information.</span><br>The difference isn't <span class="hl">scouting access.</span><br>The difference is how each team<br><span style="font-size:1.1em;color:var(--white);font-weight:600;">weights the attributes.</span></div>
+<div style="padding:10px 13px;background:rgba(226,170,32,.07);border-radius:5px;border:1px solid rgba(226,170,32,.15);">
+<div style="font-family:'JetBrains Mono',monospace;font-size:.5em;color:var(--gold);margin-bottom:3px;text-transform:uppercase;letter-spacing:1px;">The class connection</div>
+<div style="font-size:.68em;color:var(--slate);line-height:1.5;"><span class="hl">Hierarchical Bayesian conjoint</span> estimates individual-level utility weights rather than forcing every team to share the same average β.</div>
+</div>
+<div class="source">Sources: Spotrac · MLB Trade Rumors · Baseball Reference (2024–25)</div>
+</div>
+</div>
+
+---
+
+## A Player Is a Product Bundle {background-color="#060e1a"}
+
+<div class="tag">Conjoint · Choice-Based Modeling · Setup</div>
+
+<div class="two-col" style="margin-top:6px;">
+<div>
+<div style="font-size:.7em;color:var(--slate);margin-bottom:7px;">In CBC conjoint, respondents choose between <span class="hl">products defined by attribute levels.</span> In MLB, GMs choose between <span class="hl">players defined by performance attributes.</span></div>
+<table>
+<tr><th>Attribute</th><th>Levels</th></tr>
+<tr><td><span class="hl">Contact Rate</span></td><td class="dim">Elite · Average · Below Avg</td></tr>
+<tr><td><span class="hl">Power (ISO / HR)</span></td><td class="dim">Elite · Average · Below Avg</td></tr>
+<tr><td><span class="hl">Defense (DRS)</span></td><td class="dim">Plus · Average · Liability</td></tr>
+<tr><td><span class="hl">Age</span></td><td class="dim">24 · 27 · 30 · 33</td></tr>
+<tr><td><span class="hl">Contract Length</span></td><td class="dim">2 yr · 4 yr · 6 yr · 10 yr+</td></tr>
+<tr><td><span class="hl">Injury History</span></td><td class="dim">Clean · Minor · Significant</td></tr>
+</table>
+<div class="source">Framework adapted from standard CBC conjoint design (Sawtooth Software)</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px;">
+<div class="card card-g">
+<div style="font-size:.56em;font-family:'JetBrains Mono',monospace;color:var(--gold);margin-bottom:4px;text-transform:uppercase;letter-spacing:1px;">Standard Conjoint Survey</div>
+<div style="font-size:.7em;color:var(--slate);line-height:1.5;">Show 3 products → respondent picks best → repeat 12× → MNL model recovers part-worth utilities via max likelihood</div>
+</div>
+<div class="card card-b">
+<div style="font-size:.56em;font-family:'JetBrains Mono',monospace;color:var(--blue);margin-bottom:4px;text-transform:uppercase;letter-spacing:1px;">GM's Offseason (Same Thing)</div>
+<div style="font-size:.7em;color:var(--slate);line-height:1.5;">Review players → evaluate bundles → make offers → one gets signed → repeat across 30 teams, 20+ years of transactions</div>
+</div>
+<div class="card card-r">
+<div style="font-size:.56em;font-family:'JetBrains Mono',monospace;color:var(--red);margin-bottom:4px;text-transform:uppercase;letter-spacing:1px;">The Problem With WAR</div>
+<div style="font-size:.7em;color:var(--slate);line-height:1.5;">WAR applies <span class="hl">league-average part-worth weights</span> to every team. But 30 teams with different needs, markets, and timelines are not average.</div>
+</div>
+</div>
+</div>
+
+---
+
+## WAR vs. Hierarchical Bayes {background-color="#060e1a"}
+
+<div class="tag">The Statistical Core</div>
+
+<div class="two-col" style="margin-top:10px;">
+<div style="background:var(--bg3);border:1px solid rgba(226,170,32,.2);border-left:3px solid var(--gold);border-radius:6px;padding:14px 16px;">
+<div style="font-family:'JetBrains Mono',monospace;font-size:.5em;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;">📊 WAR — Aggregate Logit</div>
+<div style="font-family:'JetBrains Mono',monospace;font-size:.64em;line-height:1.7;color:var(--white);background:rgba(0,0,0,.3);padding:7px 10px;border-radius:4px;margin-bottom:8px;">WAR_j = β̄₁·contact + β̄₂·power<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ β̄₃·defense + β̄₄·age</div>
+<div style="font-size:.7em;color:var(--slate);line-height:1.6;"><span class="hl">β̄</span> = fixed league-average weights, applied <span class="hl">identically</span> to all 30 teams. A rebuilder and a contender get the exact same player valuation.</div>
+<div style="margin-top:8px;padding:7px 10px;background:rgba(239,68,68,.08);border-radius:4px;font-size:.64em;color:var(--red);">✗ 30 heterogeneous buyers treated as one homogeneous market</div>
+</div>
+<div class="fragment fade-in" style="background:var(--bg3);border:1px solid rgba(226,170,32,.2);border-left:3px solid var(--grass);border-radius:6px;padding:14px 16px;">
+<div style="font-family:'JetBrains Mono',monospace;font-size:.5em;color:var(--grass);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;">🧠 Hierarchical Bayes Conjoint</div>
+<div style="font-family:'JetBrains Mono',monospace;font-size:.64em;line-height:1.7;color:var(--white);background:rgba(0,0,0,.3);padding:7px 10px;border-radius:4px;margin-bottom:8px;">U_jt = β_1t·contact + β_2t·power<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ β_3t·defense + β_4t·age<br><br>β_t ~ N(β̄, Σ)</div>
+<div style="font-size:.7em;color:var(--slate);line-height:1.6;"><span class="hg">β_t</span> = per-team weights, pooled toward the league mean but <span class="hg">unique per team.</span> Tampa Bay's β ≠ New York's β. HB recovers both simultaneously.</div>
+<div style="margin-top:8px;padding:7px 10px;background:rgba(34,197,94,.08);border-radius:4px;font-size:.64em;color:var(--grass);">✓ Individual utility weights estimated for every buyer in the market</div>
+</div>
+</div>
+
+<div class="fragment" style="margin-top:10px;padding:8px 14px;background:rgba(226,170,32,.07);border:1px solid rgba(226,170,32,.2);border-radius:5px;font-size:.68em;color:var(--slate);text-align:center;">The HB prior <span class="hl">β̄</span> is the league average — the WAR signal. The posterior <span class="hg">β_t</span> is each team's true preference, regularized toward that mean.</div>
+
+---
+
+## Revealed Preference: No Survey Needed {background-color="#060e1a"}
+
+<div class="tag">Revealed Preference · Discrete Choice · Data Strategy</div>
+
+<div class="two-col" style="margin-top:6px;">
+<div>
+<div style="font-size:.7em;color:var(--slate);margin-bottom:8px;">We don't ask GMs what they value — we <span class="hl">infer it from what they actually paid for.</span> Transactions are revealed preferences, the gold standard over stated preferences.</div>
+<div style="display:flex;flex-direction:column;gap:3px;">
+<div style="background:var(--bg3);border:1px solid var(--gold3);border-radius:4px;padding:6px 11px;font-family:'JetBrains Mono',monospace;font-size:.6em;color:var(--gold2);text-align:center;">📋 Player enters free agency<br><span style="color:var(--slate);font-size:.88em;">Known bundle: contact · power · age · defense · health</span></div>
+<div style="color:var(--gold);text-align:center;font-size:.9em;line-height:1.2;">↓</div>
+<div style="background:var(--bg3);border:1px solid var(--gold3);border-radius:4px;padding:6px 11px;font-family:'JetBrains Mono',monospace;font-size:.6em;color:var(--gold2);text-align:center;">🤝 GM makes offer / completes trade<br><span style="color:var(--slate);font-size:.88em;">Choice observed → one survey response</span></div>
+<div style="color:var(--gold);text-align:center;font-size:.9em;line-height:1.2;">↓</div>
+<div style="background:var(--bg3);border:1px solid var(--gold3);border-radius:4px;padding:6px 11px;font-family:'JetBrains Mono',monospace;font-size:.6em;color:var(--gold2);text-align:center;">💰 Contract AAV = revealed willingness to pay<br><span style="color:var(--slate);font-size:.88em;">Price attribute is the signed contract value</span></div>
+<div style="color:var(--gold);text-align:center;font-size:.9em;line-height:1.2;">↓</div>
+<div style="background:var(--bg3);border:1px solid var(--gold);background:rgba(226,170,32,.1);border-radius:4px;padding:6px 11px;font-family:'JetBrains Mono',monospace;font-size:.6em;color:var(--gold2);text-align:center;">📐 Regress AAV on attributes · by team<br><span style="color:var(--slate);font-size:.88em;">Residuals vs. WAR = implicit part-worth gaps per team</span></div>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px;">
+<div class="card card-g">
+<div style="font-size:.54em;font-family:'JetBrains Mono',monospace;color:var(--gold);margin-bottom:4px;text-transform:uppercase;letter-spacing:1px;">Why This Works</div>
+<div style="font-size:.7em;color:var(--slate);line-height:1.5;">Each free agency = one CBC choice task<br>Each team = one HB respondent<br>Decades of transactions = thousands of "responses"<br><span class="hg">Richer than any survey we could design.</span></div>
+</div>
+<div class="card card-b">
+<div style="font-size:.54em;font-family:'JetBrains Mono',monospace;color:var(--blue);margin-bottom:4px;text-transform:uppercase;letter-spacing:1px;">The Key Empirical Signal</div>
+<div style="font-size:.7em;color:var(--slate);line-height:1.5;">Fit: <span class="mono">AAV ~ WAR + attributes + team_FE</span><br>If residuals <span class="hl">cluster by team identity,</span> that is direct evidence of heterogeneous β — exactly the signature HB captures.</div>
+</div>
+<div class="card card-s">
+<div style="font-size:.54em;font-family:'JetBrains Mono',monospace;color:var(--slate2);margin-bottom:4px;text-transform:uppercase;letter-spacing:1px;">Stated vs. Revealed</div>
+<div style="font-size:.7em;color:var(--slate);line-height:1.5;">Surveys capture what GMs <em>say</em> they value. Contracts capture what they <em>actually pay for.</em> Real money → far more reliable utility signal.</div>
+</div>
+<div class="source">Analogous to IRI scanner data — revealed preference at massive scale.</div>
+</div>
+</div>
+
+---
+
+## 30 Teams. 30 Different β Vectors. {background-color="#060e1a"}
+
+<div class="tag">HB Output · Individual-Level Part-Worth Weights</div>
+
+<div style="font-size:.68em;color:var(--slate);margin-top:4px;margin-bottom:3px;">HB returns <span class="hl">one β vector per team</span> — regularized toward the league mean but free to deviate. Each row is a different posterior β. The column variation <em>is</em> the point.</div>
+
+<div class="hmap-grid">
+<div class="hmap-header"></div>
+<div class="hmap-header">Contact / OBP</div>
+<div class="hmap-header">Power / HR</div>
+<div class="hmap-header">Defense</div>
+<div class="hmap-header">Youth</div>
+<div class="hmap-header">Health</div>
+<div class="hmap-label">⚾ Rays</div>
+<div class="hmap-cell h4">High</div><div class="hmap-cell h2">Low</div><div class="hmap-cell h4">High</div><div class="hmap-cell h5">Dominant</div><div class="hmap-cell h4">High</div>
+<div class="hmap-label">⚾ Yankees</div>
+<div class="hmap-cell h3">Medium</div><div class="hmap-cell h5">Dominant</div><div class="hmap-cell h1">Avoid</div><div class="hmap-cell h2">Low</div><div class="hmap-cell h3">Medium</div>
+<div class="hmap-label">⚾ Mets</div>
+<div class="hmap-cell h3">Medium</div><div class="hmap-cell h4">High</div><div class="hmap-cell h2">Low</div><div class="hmap-cell h3">Medium</div><div class="hmap-cell h2">Low</div>
+<div class="hmap-label">⚾ Red Sox</div>
+<div class="hmap-cell h4">High</div><div class="hmap-cell h3">Medium</div><div class="hmap-cell h3">Medium</div><div class="hmap-cell h3">Medium</div><div class="hmap-cell h5">Dominant</div>
+<div class="hmap-label">⚾ Dodgers</div>
+<div class="hmap-cell h5">Dominant</div><div class="hmap-cell h4">High</div><div class="hmap-cell h3">Medium</div><div class="hmap-cell h4">High</div><div class="hmap-cell h4">High</div>
+<div class="hmap-label">⚾ Astros</div>
+<div class="hmap-cell h4">High</div><div class="hmap-cell h4">High</div><div class="hmap-cell h4">High</div><div class="hmap-cell h3">Medium</div><div class="hmap-cell h3">Medium</div>
+</div>
+
+<div style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+<div style="padding:7px 10px;background:rgba(34,197,94,.07);border-radius:4px;border:1px solid rgba(34,197,94,.15);font-size:.62em;color:var(--slate);"><span class="hg">Rays:</span> Youth β dominates — develop cheap young athletes, maximize future flexibility over present production.</div>
+<div style="padding:7px 10px;background:rgba(226,170,32,.07);border-radius:4px;border:1px solid rgba(226,170,32,.15);font-size:.62em;color:var(--slate);"><span class="hl">Yankees:</span> Power sells seats. Defense is replaceable cheaply. Stars only, long contracts accepted.</div>
+<div style="padding:7px 10px;background:rgba(59,130,246,.07);border-radius:4px;border:1px solid rgba(59,130,246,.15);font-size:.62em;color:var(--slate);"><span class="hb">Dodgers:</span> Best analytics in baseball — balanced β with no systematic blind spots.</div>
+</div>
+
+---
+
+## Same Player, Four Price Tags {background-color="#060e1a"}
+
+<div class="tag">Individual-Level Part-Worth Utilities · HB in Action</div>
+
+<div style="font-size:.68em;color:var(--slate);margin:5px 0 9px;">Juan Soto 2024 — bids varied by <span class="hr">over $200M</span> despite identical public data. Each reflects a different β vector on the same attribute bundle.</div>
+
+<div class="four-col" style="margin-bottom:9px;">
+<div class="offer" style="border-left:3px solid #1d4ed8;">
+<div class="team-name" style="color:#60a5fa;">⚾ DODGERS</div>
+<div class="dollars" style="color:var(--slate);">~$700M</div>
+<div class="detail"><span class="hl">β_champ:</span> Championship multiplier<br>Soto = final dynasty piece<br>Star power coeff: <span class="hl">+1.4×</span><br>β_age very high at 26</div>
+</div>
+<div class="offer" style="border:2px solid var(--gold);position:relative;">
+<div style="position:absolute;top:-9px;left:50%;transform:translateX(-50%);background:var(--gold);color:var(--bg);font-family:'JetBrains Mono',monospace;font-size:.44em;padding:2px 6px;border-radius:2px;letter-spacing:1px;white-space:nowrap;">WON THE BID</div>
+<div class="team-name" style="color:var(--gold2);">⚾ METS</div>
+<div class="dollars" style="color:var(--gold2);">$765M</div>
+<div class="detail"><span class="hg">β_fanbase:</span> Revenue recovery<br>Post-rebuild re-engagement<br>Off-field premium: <span class="hg">+$80M</span><br>Owner mandate to spend</div>
+</div>
+<div class="offer" style="border-left:3px solid #dc2626;">
+<div class="team-name" style="color:#f87171;">⚾ RED SOX</div>
+<div class="dollars" style="color:var(--slate);">~$600M</div>
+<div class="detail"><span class="dim">β_WAR:</span> On-field value only<br>Conservative injury discount<br>Risk penalty: <span class="dim">−$100M</span><br>Analytics-first culture</div>
+</div>
+<div class="offer" style="border-left:3px solid #6b7280;">
+<div class="team-name" style="color:#9ca3af;">⚾ YANKEES</div>
+<div class="dollars" style="color:var(--slate);">$760M</div>
+<div class="detail"><span class="dim">β_length:</span> 16-year term offered<br>$5M less, one extra year<br>Lost by a razor margin<br>Soto chose 15 yrs / Mets</div>
+</div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+<div class="pq" style="margin:0;">Same WAR. Same Statcast. Same scouting report. <span class="hl">Four completely different utility functions.</span> Individual-level β, not a league-average answer.</div>
+<div style="padding:8px 12px;background:rgba(226,170,32,.06);border-radius:5px;border:1px solid rgba(226,170,32,.15);font-size:.64em;color:var(--slate);">The <span class="hl">$5M difference</span> between Yankees ($760M / 16 yr) and Mets ($765M / 15 yr) shows that term structure — not just total dollars — is its own attribute with its own β. Soto's preference for fewer years is itself a revealed preference signal.</div>
+</div>
+
+---
+
+## The Moneyball Arbitrage {background-color="#060e1a"}
+
+<div class="tag">Market Inefficiency · Conjoint Residuals · Historical Case</div>
+
+<div class="two-col" style="margin-top:6px;">
+<div>
+<div style="font-size:.7em;color:var(--slate);margin-bottom:7px;">Oakland found attributes where the <span class="hl">market's aggregate β were systematically wrong</span> — and bought those attributes below their true contribution to winning.</div>
+<div style="font-size:.56em;color:var(--red);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:5px;">Market β in 2002 — what teams paid for</div>
+<div class="bw"><div class="bl">Batting Average</div><div class="bt"><div class="bf bf-r" style="width:86%">Overvalued</div></div></div>
+<div class="bw"><div class="bl">RBI / "Clutch" reputation</div><div class="bt"><div class="bf bf-r" style="width:78%">Overvalued</div></div></div>
+<div class="bw"><div class="bl">Stolen Bases / Speed</div><div class="bt"><div class="bf bf-r" style="width:65%">Overvalued</div></div></div>
+<div class="bw"><div class="bl">OBP / Walk Rate</div><div class="bt"><div class="bf bf-s" style="width:24%">Underpriced</div></div></div>
+<div style="font-size:.56em;color:var(--grass);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:1.5px;margin:9px 0 5px;">True β — what actually won games</div>
+<div class="bw"><div class="bl">OBP / Walk Rate</div><div class="bt"><div class="bf bf-g" style="width:92%">Most Predictive of Runs</div></div></div>
+<div class="bw"><div class="bl">Batting Average</div><div class="bt"><div class="bf bf-s" style="width:50%">Moderate · Overpriced</div></div></div>
+<div class="bw"><div class="bl">Stolen Bases</div><div class="bt"><div class="bf bf-s" style="width:22%">Low Marginal Value</div></div></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px;">
+<div class="card card-g">
+<div style="font-size:.54em;font-family:'JetBrains Mono',monospace;color:var(--gold);margin-bottom:4px;text-transform:uppercase;letter-spacing:1px;">The Conjoint Arbitrage Logic</div>
+<div style="font-size:.7em;line-height:1.55;color:var(--slate);">When the <span class="hl">market's aggregate β misprice an attribute,</span> the team with better individual-level estimates acquires it <span class="hl">below its true contribution to winning.</span><br><br>Gap between market β and true β = <span class="hg">the inefficiency to exploit.</span> Oakland's OBP edge produced ~40 extra WAR at below-market cost in 2002.</div>
+</div>
+<div class="card card-s">
+<div style="font-size:.54em;font-family:'JetBrains Mono',monospace;color:var(--slate);margin-bottom:4px;text-transform:uppercase;letter-spacing:1px;">Today's Frontier (OBP Gap Has Closed)</div>
+<div style="font-size:.7em;line-height:1.55;color:var(--slate);">Modern arbitrage: <span class="hl">biomechanical injury prediction, spin rate aging curves, catcher framing, pitch tunneling, swing decisions.</span> Same conjoint logic — find where the market's β are still systematically wrong.</div>
+</div>
+<div class="source">Lewis (2003). Moneyball. | Baumer &amp; Zimbalist (2014). The Sabermetric Revolution.</div>
+</div>
+</div>
+
+---
+
+## Bringing It Back to Class {background-color="#060e1a"}
+
+<div class="tag">Conjoint · Hierarchical Bayes · Revealed Preference · Full Synthesis</div>
+
+<div style="margin-top:6px;">
+<table style="margin-bottom:9px;">
+<tr><th>Class Concept</th><th>Textbook Application</th><th>MLB Translation</th></tr>
+<tr><td><span class="hl">CBC Conjoint</span></td><td class="dim">Respondents choose between product attribute bundles</td><td>GMs choose between player attribute bundles each offseason</td></tr>
+<tr><td><span class="hl">Hierarchical Bayes</span></td><td class="dim">Individual part-worth utilities per respondent, pooled to population</td><td>Each team has its own β vector, pooled toward the league average</td></tr>
+<tr><td><span class="hl">Aggregate Logit</span></td><td class="dim">One weight set averaged across all respondents</td><td>WAR — fixed β̄, same for every team regardless of roster or market</td></tr>
+<tr><td><span class="hl">Revealed Preference</span></td><td class="dim">Infer utilities from observed choices, not surveys</td><td>Contract AAV + player attributes → recover β from real transactions</td></tr>
+<tr><td><span class="hl">Market Inefficiency</span></td><td class="dim">Gap between market price and true utility = arbitrage window</td><td>Moneyball exploited OBP mispricing; today teams hunt the next gap</td></tr>
+<tr><td><span class="hl">Willingness to Pay</span></td><td class="dim">Max price a buyer pays for an additional unit of an attribute</td><td>The $205M bid spread = different WTP for the same Soto bundle</td></tr>
+</table>
+<div class="pq">The GM's offseason is a conjoint problem. The scouting report is a choice set. The contract is revealed preference. HB estimates individual-level utilities — <span class="hl">without ever running a survey.</span></div>
+</div>
+
+---
+
+## {background-color="#060e1a"}
+
+<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:16px 40px;">
+<div style="font-family:'JetBrains Mono',monospace;font-size:.54em;color:var(--gold3);letter-spacing:5px;text-transform:uppercase;margin-bottom:14px;">The Takeaway</div>
+<div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:3.6em;line-height:.97;color:var(--white);">Billy Beane<br><span style="color:var(--gold);">Didn't Invent</span><br>Analytics.</div>
+<div style="font-family:'Bebas Neue',Impact,sans-serif;font-size:1.8em;color:var(--grass);margin-top:12px;letter-spacing:3px;">He Just Ran the Regression.</div>
+<div style="max-width:650px;margin-top:16px;font-size:.78em;color:var(--slate);line-height:1.8;">Every front office has always been solving a conjoint problem.<br>The teams who understood <span class="hl">individual-level utility estimation</span> — and found where <span class="hg">the market's aggregate β were wrong</span> — captured the arbitrage.<br><br>The method formalizes what GMs did by intuition. The advantage goes to whoever builds the better model first.</div>
+<div style="margin-top:18px;display:flex;gap:16px;align-items:center;justify-content:center;">
+<div style="font-family:'JetBrains Mono',monospace;font-size:.5em;color:var(--muted);letter-spacing:2px;padding:4px 11px;border:1px solid var(--muted);border-radius:3px;">CONJOINT</div>
+<div style="font-family:'JetBrains Mono',monospace;font-size:.5em;color:var(--muted);letter-spacing:2px;padding:4px 11px;border:1px solid var(--muted);border-radius:3px;">HIERARCHICAL BAYES</div>
+<div style="font-family:'JetBrains Mono',monospace;font-size:.5em;color:var(--muted);letter-spacing:2px;padding:4px 11px;border:1px solid var(--muted);border-radius:3px;">REVEALED PREFERENCE</div>
+</div>
+</div>

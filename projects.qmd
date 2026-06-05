@@ -8,6 +8,14 @@ A growing collection of classwork, analyses, and portfolio projects.
 
 :::{.quick-grid}
 :::{.quick-card}
+### [Moneyball Was a Conjoint Problem](Kleiman_Ben-moneyball_conjoint.html){target="_blank"}
+
+RevealJS slides for MGTA 490 arguing that MLB front offices implicitly run Hierarchical Bayesian conjoint analysis every offseason — using Juan Soto's $765M deal as the case study.
+
+**Topics:** Conjoint Analysis · Hierarchical Bayes · Revealed Preference
+:::
+
+:::{.quick-card}
 ### Analytics Work
 
 Course projects, data analyses, and dashboards will appear here as they are finalized.
@@ -17,11 +25,5 @@ Course projects, data analyses, and dashboards will appear here as they are fina
 ### Business Applications
 
 This section will highlight work that connects data analysis to business questions and decisions.
-:::
-
-:::{.quick-card}
-### More Soon
-
-I am still building out this portfolio, so more detailed project writeups are on the way.
 :::
 :::
