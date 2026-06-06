@@ -1,0 +1,246 @@
+---
+title: "Key Drivers Analysis"
+author: "Benjamin Kleiman"
+date: today
+---
+
+See the full post at [posts/hw5-key-drivers-analysis/index.qmd](posts/hw5-key-drivers-analysis/index.qmd).
+
+```{python}
+#| label: setup
+#| echo: false
+import numpy as np
+import pandas as pd
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+import statsmodels.api as sm
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import StandardScaler
+from itertools import combinations
+import math
+import warnings
+warnings.filterwarnings("ignore")
+
+from IPython.display import display, HTML as IHTML
+
+def show(fig):
+    display(IHTML(fig.to_html(full_html=False, include_plotlyjs="cdn")))
+
+NAVY = "#003A70"; TEAL = "#0f766e"; AMBER = "#d97706"
+RED  = "#dc2626"; GREEN = "#059669"; PURPLE = "#7c3aed"
+PINK = "#db2777"; LIGHT = "#f0f6fc"; BLUE = "#1e5c9b"
+```
+
+## Data
+
+```{python}
+df = pd.read_csv("data_for_drivers_analysis.csv")
+drivers = ['trust','build','differs','easy','appealing','rewarding','popular','service','impact']
+LABELS = {
+    'trust':'Trust','build':'Build Quality','differs':'Differentiated',
+    'easy':'Easy to Use','appealing':'Appealing','rewarding':'Rewarding',
+    'popular':'Popular','service':'Good Service','impact':'Makes Impact',
+}
+X = df[drivers].values
+y = df['satisfaction'].values
+print(f"N = {len(df):,} | Brands = {df['brand'].nunique()} | R² full model = ?")
+```
+
+## Method 1: Pearson Correlations
+
+```{python}
+pearson = df[drivers].corrwith(df['satisfaction'])
+pearson_labeled = pearson.rename(index=LABELS).sort_values(ascending=False)
+print(pearson_labeled.round(4).to_string())
+```
+
+## Method 2: Standardized Regression Coefficients
+
+```{python}
+X_s = StandardScaler().fit_transform(X)
+y_s = StandardScaler().fit_transform(y.reshape(-1,1)).ravel()
+ols = sm.OLS(y_s, sm.add_constant(X_s)).fit()
+std_betas = pd.Series(ols.params[1:], index=[LABELS[d] for d in drivers])
+print(std_betas.sort_values(ascending=False).round(4).to_string())
+print(f"\nFull model R² = {ols.rsquared:.4f}")
+```
+
+## Method 3: Drop-One R² (Usefulness)
+
+```{python}
+full_r2 = sm.OLS(y, sm.add_constant(X)).fit().rsquared
+drop_one = {}
+for i, col in enumerate(drivers):
+    X_d = np.delete(X, i, axis=1)
+    drop_one[LABELS[col]] = full_r2 - sm.OLS(y, sm.add_constant(X_d)).fit().rsquared
+print(pd.Series(drop_one).sort_values(ascending=False).round(5).to_string())
+```
+
+## Method 4: Shapley Values (Custom Code, Linear Regression, R² value function)
+
+```{python}
+#| cache: true
+def r2_cache_build(X, y):
+    n = X.shape[1]
+    cache = {}
+    for size in range(n + 1):
+        for subset in combinations(range(n), size):
+            cache[subset] = (0.0 if len(subset) == 0
+                             else sm.OLS(y, sm.add_constant(X[:, list(subset)])).fit().rsquared)
+    return cache
+
+def shapley_linear(X, y, names):
+    n = len(names)
+    cache = r2_cache_build(X, y)
+    sv = {}
+    for j in range(n):
+        others = [i for i in range(n) if i != j]
+        s = 0.0
+        for size in range(n):
+            for subset in combinations(others, size):
+                w = math.factorial(size) * math.factorial(n-size-1) / math.factorial(n)
+                s += w * (cache[tuple(sorted(subset+(j,)))] - cache[subset])
+        sv[names[j]] = s
+    return sv, cache
+
+shapley_raw, cache = shapley_linear(X, y, drivers)
+shapley_s = pd.Series({LABELS[k]: v for k, v in shapley_raw.items()}).sort_values(ascending=False)
+print(shapley_s.round(4).to_string())
+print(f"\nShapley sum = {sum(shapley_raw.values()):.6f} | R² = {cache[tuple(range(len(drivers)))]:.6f}")
+```
+
+## Method 5: Johnson's Relative Weights
+
+```{python}
+def johnsons_rw(X, y):
+    Xs = StandardScaler().fit_transform(X)
+    ys = StandardScaler().fit_transform(y.reshape(-1,1)).ravel()
+    p = Xs.shape[1]
+    Rxx = np.corrcoef(Xs.T)
+    rxy = np.array([np.corrcoef(Xs[:,j], ys)[0,1] for j in range(p)])
+    eigvals, V = np.linalg.eigh(Rxx)
+    eigvals = np.maximum(eigvals, 1e-10)
+    beta_ols = np.linalg.lstsq(Rxx, rxy, rcond=None)[0]
+    beta_z = V.T @ beta_ols
+    rw = np.array([
+        sum((V[j,k]*np.sqrt(eigvals[k]))**2 * beta_z[k]**2 for k in range(p))
+        for j in range(p)
+    ])
+    return rw, float(rxy @ beta_ols)
+
+rw, R2_jrw = johnsons_rw(X, y)
+johnson_s = pd.Series(rw, index=[LABELS[d] for d in drivers]).sort_values(ascending=False)
+print(johnson_s.round(4).to_string())
+print(f"\nJohnson sum = {rw.sum():.6f} | R² = {R2_jrw:.6f}")
+```
+
+## Method 6: Random Forest -- Mean Decrease in Gini
+
+```{python}
+rf = RandomForestRegressor(n_estimators=1000, random_state=42, n_jobs=-1)
+rf.fit(X, y)
+gini = pd.Series(rf.feature_importances_, index=[LABELS[d] for d in drivers]).sort_values(ascending=False)
+print(gini.round(4).to_string())
+```
+
+## Bonus: Shapley Values for Logistic Regression (GLM, McFadden pseudo-R²)
+
+```{python}
+#| cache: true
+y_bin = (df['satisfaction'] >= 4).astype(int).values
+
+def mcfadden_r2(X_sub, y_bin):
+    if X_sub.shape[1] == 0:
+        return 0.0
+    clf = LogisticRegression(max_iter=500, solver='lbfgs', C=1e6)
+    clf.fit(X_sub, y_bin)
+    p = np.clip(clf.predict_proba(X_sub)[:,1], 1e-9, 1-1e-9)
+    ll_m = np.sum(y_bin*np.log(p) + (1-y_bin)*np.log(1-p))
+    p0 = y_bin.mean()
+    ll_0 = len(y_bin)*(p0*np.log(p0) + (1-p0)*np.log(1-p0))
+    return 1.0 - ll_m / ll_0
+
+def shapley_glm(X, y_bin, names, val_fn):
+    n = len(names)
+    vc = {}
+    for size in range(n+1):
+        for subset in combinations(range(n), size):
+            vc[subset] = val_fn(X[:, list(subset)], y_bin) if subset else 0.0
+    sv = {}
+    for j in range(n):
+        others = [i for i in range(n) if i != j]
+        s = 0.0
+        for size in range(n):
+            for subset in combinations(others, size):
+                w = math.factorial(size)*math.factorial(n-size-1)/math.factorial(n)
+                s += w*(vc[tuple(sorted(subset+(j,)))]-vc[subset])
+        sv[names[j]] = s
+    return sv, vc
+
+shapley_glm_raw, glm_cache = shapley_glm(X, y_bin, drivers, mcfadden_r2)
+glm_s = pd.Series({LABELS[k]: v for k, v in shapley_glm_raw.items()}).sort_values(ascending=False)
+print(glm_s.round(4).to_string())
+print(f"\nGLM Shapley sum = {sum(shapley_glm_raw.values()):.6f}")
+print(f"Full McFadden R² = {glm_cache[tuple(range(len(drivers)))]:.6f}")
+```
+
+## Full Comparison Table
+
+```{python}
+results = pd.DataFrame({
+    'Pearson r':   pearson.rename(index=LABELS),
+    'Std. Beta':   pd.Series(ols.params[1:], index=[LABELS[d] for d in drivers]),
+    'Drop-one R²': pd.Series(drop_one),
+    'Shapley':     pd.Series({LABELS[k]:v for k,v in shapley_raw.items()}),
+    "Johnson's RW":pd.Series(rw, index=[LABELS[d] for d in drivers]),
+    'RF Gini':     gini,
+})
+results_norm = (results / results.sum()) * 100
+results_norm = results_norm.sort_values('Shapley', ascending=False)
+
+def color_cell(val):
+    if val >= 20:    return "background-color: #dcfce7; color: #166534; font-weight:600"
+    elif val >= 14:  return "background-color: #fef9c3; color: #854d0e"
+    elif val <= 6:   return "background-color: #fee2e2; color: #991b1b"
+    return ""
+
+display(
+    results_norm.round(1).style
+    .applymap(color_cell)
+    .format("{:.1f}%")
+    .set_table_styles([
+        {"selector":"thead th","props":[("background-color",NAVY),("color","white"),
+             ("font-weight","600"),("padding","0.45rem 0.9rem"),("text-align","center")]},
+        {"selector":"tbody td","props":[("padding","0.4rem 0.9rem"),("text-align","center")]},
+        {"selector":"tbody th","props":[("font-weight","500"),("padding","0.4rem 0.9rem"),
+             ("text-align","left"),("background-color","#f8fafc")]},
+        {"selector":"table","props":[("border-collapse","collapse"),("width","100%"),
+             ("margin","1rem 0"),("font-size","0.88em")]},
+    ])
+    .set_caption("Normalized importance scores (% of column total). Green = top, yellow = middle, red = bottom.")
+)
+```
+
+```{python}
+#| label: fig-heatmap
+z_vals = results_norm.values
+fig = go.Figure(go.Heatmap(
+    z=z_vals,
+    x=results_norm.columns.tolist(),
+    y=results_norm.index.tolist(),
+    colorscale=[[0,"#fee2e2"],[0.5,"#fef9c3"],[1,"#dcfce7"]],
+    text=[[f"{v:.1f}%" for v in row] for row in z_vals],
+    texttemplate="%{text}",
+    textfont=dict(size=11),
+    colorbar=dict(title="% of total"),
+    zmin=0, zmax=25,
+))
+fig.update_layout(
+    title="Key drivers heatmap: normalized importance by method",
+    height=420, paper_bgcolor="white",
+    font=dict(family="Arial", size=12),
+    margin=dict(l=140, r=30, t=60, b=80),
+)
+show(fig)
+```

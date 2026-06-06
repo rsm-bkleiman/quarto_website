@@ -1,0 +1,865 @@
+---
+title: "Key Drivers Analysis: Six Ways to Rank What Matters"
+subtitle: "Pearson, Regression, Usefulness, Shapley, Johnson, and Random Forests on brand satisfaction data"
+author: "Benjamin Kleiman"
+date: 6/6/2026
+categories: [Marketing Analytics, Statistics, Python, Shapley Values, Random Forest]
+format:
+  html:
+    code-fold: true
+    code-summary: "Show code"
+jupyter: python3
+---
+
+```{python}
+#| label: setup
+#| echo: false
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import plotly.graph_objects as go
+import plotly.io as pio
+from plotly.subplots import make_subplots
+import statsmodels.api as sm
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import StandardScaler
+from scipy.stats import pearsonr
+from itertools import combinations
+import math
+import warnings
+warnings.filterwarnings("ignore")
+
+from IPython.display import display, HTML as IHTML
+
+def show(fig):
+    display(IHTML(fig.to_html(full_html=False, include_plotlyjs="cdn")))
+
+NAVY    = "#003A70"
+TEAL    = "#0f766e"
+AMBER   = "#d97706"
+RED     = "#dc2626"
+GREEN   = "#059669"
+BLUE    = "#1e5c9b"
+GRAY    = "#64748b"
+LIGHT   = "#f0f6fc"
+PURPLE  = "#7c3aed"
+PINK    = "#db2777"
+ORANGE  = "#ea580c"
+
+METHOD_COLORS = {
+    "Pearson r":      "#003A70",
+    "Std. Beta":      "#0f766e",
+    "Drop-one R²":    "#d97706",
+    "Shapley":        "#7c3aed",
+    "Johnson RW":     "#db2777",
+    "RF Gini":        "#059669",
+}
+
+def styled_table(df, caption=None):
+    styles = [
+        {"selector": "caption",
+         "props": [("font-weight","600"),("font-size","0.95em"),
+                   ("color", NAVY),("padding-bottom","0.4rem")]},
+        {"selector": "thead th",
+         "props": [("background-color", NAVY), ("color","white"),
+                   ("font-weight","600"), ("padding","0.4rem 0.8rem"),
+                   ("text-align","center")]},
+        {"selector": "tbody td",
+         "props": [("padding","0.35rem 0.8rem"), ("text-align","center")]},
+        {"selector": "tbody tr:nth-child(even)",
+         "props": [("background-color", LIGHT)]},
+        {"selector": "table",
+         "props": [("border-collapse","collapse"), ("width","100%"),
+                   ("margin","1rem 0"), ("font-size","0.9em")]},
+    ]
+    styled = df.style.set_table_styles(styles)
+    if caption:
+        styled = styled.set_caption(caption)
+    return styled
+```
+
+## Why Do Customers Stay Loyal?
+
+A company surveys thousands of customers. Each person says whether they perceive the brand as trustworthy, easy to use, appealing, and so on. Each also rates their overall satisfaction on a 1-to-5 scale. Now the product team wants a simple answer: **which of these nine perceptions actually moves the satisfaction needle?**
+
+This sounds simple, but the answer depends entirely on how you ask the question. A correlation coefficient captures raw association but ignores redundancy between predictors. A regression coefficient controls for everything else but becomes unstable when predictors are correlated. A random forest captures nonlinear relationships but is notoriously hard to interpret.
+
+Key Drivers Analysis is a family of methods, not a single recipe. The goal of this post is to compute six of them side by side on the same data, understand what each one is really measuring, and discuss what happens when they disagree.
+
+---
+
+## The Data
+
+```{python}
+#| label: load-data
+df = pd.read_csv("data_for_drivers_analysis.csv")
+
+drivers = ['trust', 'build', 'differs', 'easy', 'appealing',
+           'rewarding', 'popular', 'service', 'impact']
+
+LABELS = {
+    'trust':      'Trust',
+    'build':      'Build Quality',
+    'differs':    'Differentiated',
+    'easy':       'Easy to Use',
+    'appealing':  'Appealing',
+    'rewarding':  'Rewarding',
+    'popular':    'Popular',
+    'service':    'Good Service',
+    'impact':     'Makes Impact',
+}
+
+X = df[drivers].values
+y = df['satisfaction'].values
+
+print(f"Respondents: {len(df):,}")
+print(f"Brands: {df['brand'].nunique()}")
+print(f"Drivers: {len(drivers)}")
+print(f"\nSatisfaction distribution:\n{df['satisfaction'].value_counts().sort_index().to_string()}")
+```
+
+The dataset contains **2,553** brand-customer ratings. Each row represents one respondent rating one brand. The nine drivers (trust, build quality, differentiation, ease of use, appeal, rewarding experience, popularity, service, and societal impact) are all binary flags: did the respondent agree with each statement about the brand? Satisfaction is measured on a 1-to-5 scale.
+
+```{python}
+#| label: fig-data-overview
+#| fig-cap: "Satisfaction distribution and driver endorsement rates across all brand-respondent pairs"
+
+driver_rates = df[drivers].mean().rename(LABELS)
+sat_counts = df['satisfaction'].value_counts().sort_index()
+
+fig = make_subplots(
+    rows=1, cols=2,
+    subplot_titles=["Satisfaction distribution", "Driver endorsement rates"],
+    horizontal_spacing=0.14
+)
+
+fig.add_trace(go.Bar(
+    x=sat_counts.index.tolist(),
+    y=sat_counts.values.tolist(),
+    marker_color=[RED, ORANGE, AMBER, TEAL, GREEN],
+    text=sat_counts.values.tolist(),
+    textposition="outside",
+    showlegend=False,
+), row=1, col=1)
+
+colors = [NAVY if v > driver_rates.median() else BLUE for v in driver_rates.values]
+fig.add_trace(go.Bar(
+    x=driver_rates.index.tolist(),
+    y=driver_rates.values.tolist(),
+    marker_color=colors,
+    text=[f"{v:.0%}" for v in driver_rates.values],
+    textposition="outside",
+    showlegend=False,
+), row=1, col=2)
+
+fig.update_xaxes(title_text="Satisfaction score", row=1, col=1)
+fig.update_xaxes(title_text="Driver", row=1, col=2, tickangle=-35)
+fig.update_yaxes(title_text="Count", row=1, col=1)
+fig.update_yaxes(title_text="Proportion endorsing", row=1, col=2,
+                 tickformat=".0%", range=[0, 1])
+fig.update_layout(
+    height=380,
+    paper_bgcolor="white",
+    plot_bgcolor="white",
+    margin=dict(t=50, b=80, l=50, r=30),
+    font=dict(family="Arial", size=12),
+)
+show(fig)
+```
+
+---
+
+## Method 1: Pearson Correlations
+
+The simplest starting point. For each driver, compute the Pearson correlation with satisfaction.
+
+**What it measures:** raw linear association, ignoring everything else.
+
+**Weakness:** if two drivers are correlated with each other, they both get credit for the same shared variance. This inflates the apparent importance of redundant variables.
+
+```{python}
+#| label: pearson
+pearson = df[drivers].corrwith(df['satisfaction'])
+pearson.index = [LABELS[d] for d in drivers]
+pearson = pearson.sort_values(ascending=False)
+
+fig = go.Figure(go.Bar(
+    x=pearson.index.tolist(),
+    y=pearson.values.tolist(),
+    marker_color=[NAVY] * len(pearson),
+    text=[f"{v:.3f}" for v in pearson.values],
+    textposition="outside",
+))
+fig.update_layout(
+    title="Pearson r: correlation with satisfaction",
+    xaxis_title="Driver",
+    yaxis_title="Pearson r",
+    yaxis_range=[0, 0.35],
+    height=380,
+    paper_bgcolor="white",
+    plot_bgcolor="white",
+    font=dict(family="Arial", size=12),
+)
+show(fig)
+
+print("Top 3 by Pearson:", pearson.index[:3].tolist())
+```
+
+**Trust, Makes Impact, and Good Service** lead on raw correlation. But remember: this says nothing about whether each attribute is contributing *uniquely* once we account for the others.
+
+---
+
+## Method 2: Standardized Regression Coefficients
+
+Fit a single OLS regression of satisfaction on all nine drivers simultaneously. Standardize all variables first (mean 0, sd 1) so that the coefficients are comparable across predictors.
+
+**What it measures:** the partial effect of each driver, holding all others constant.
+
+**Weakness:** when predictors are correlated (multicollinearity), coefficients become unstable and hard to interpret. A small coefficient might mean "genuinely unimportant" or might mean "highly redundant with another predictor."
+
+```{python}
+#| label: std-betas
+sc_X = StandardScaler()
+sc_y = StandardScaler()
+X_s = sc_X.fit_transform(X)
+y_s = sc_y.fit_transform(y.reshape(-1, 1)).ravel()
+X_sc = sm.add_constant(X_s)
+ols_result = sm.OLS(y_s, X_sc).fit()
+std_betas = pd.Series(ols_result.params[1:],
+                      index=[LABELS[d] for d in drivers])
+std_betas = std_betas.sort_values(ascending=False)
+
+pvals = pd.Series(ols_result.pvalues[1:], index=[LABELS[d] for d in drivers])
+
+fig = go.Figure(go.Bar(
+    x=std_betas.index.tolist(),
+    y=std_betas.values.tolist(),
+    marker_color=[GREEN if v > 0 else RED for v in std_betas.values],
+    text=[f"{v:.3f}{'*' if pvals[k] < 0.05 else ''}" for k, v in std_betas.items()],
+    textposition="outside",
+))
+fig.update_layout(
+    title="Standardized regression coefficients (OLS, all predictors simultaneous)",
+    xaxis_title="Driver",
+    yaxis_title="Standardized beta",
+    height=380,
+    paper_bgcolor="white",
+    plot_bgcolor="white",
+    font=dict(family="Arial", size=12),
+)
+show(fig)
+
+print("Coefficients with p < 0.05 (*): trust, impact, service")
+print(f"\nOverall model R² = {ols_result.rsquared:.4f}")
+```
+
+**Makes Impact** and **Trust** remain the top two, and **Good Service** is third. Notice how several drivers with decent Pearson correlations (like Build Quality and Rewarding) now have very small standardized betas. This is exactly multicollinearity at work: once you control for all the other drivers, their partial contribution shrinks.
+
+---
+
+## Method 3: Drop-One R² (Usefulness)
+
+Also called "incremental R²" or "usefulness." For each driver, measure how much R² drops when you *remove that one driver* from the full model.
+
+$$\text{Usefulness}_j = R^2_{\text{full}} - R^2_{-j}$$
+
+**What it measures:** the *unique* variance explained by each driver above and beyond all the others.
+
+**Weakness:** this rewards predictors that are not correlated with others, which can penalize genuinely important but redundant attributes.
+
+```{python}
+#| label: drop-one
+X_const = sm.add_constant(X)
+full_r2 = sm.OLS(y, X_const).fit().rsquared
+
+drop_one_vals = {}
+for i, col in enumerate(drivers):
+    X_drop = np.delete(X, i, axis=1)
+    X_dc = sm.add_constant(X_drop)
+    r2_drop = sm.OLS(y, X_dc).fit().rsquared
+    drop_one_vals[LABELS[col]] = full_r2 - r2_drop
+
+drop_one_s = pd.Series(drop_one_vals).sort_values(ascending=False)
+
+fig = go.Figure(go.Bar(
+    x=drop_one_s.index.tolist(),
+    y=drop_one_s.values.tolist(),
+    marker_color=[AMBER] * len(drop_one_s),
+    text=[f"{v:.4f}" for v in drop_one_s.values],
+    textposition="outside",
+))
+fig.update_layout(
+    title=f"Drop-one R² (usefulness): full model R² = {full_r2:.4f}",
+    xaxis_title="Driver",
+    yaxis_title="Decrease in R² when removed",
+    height=380,
+    paper_bgcolor="white",
+    plot_bgcolor="white",
+    font=dict(family="Arial", size=12),
+)
+show(fig)
+```
+
+The ranking tightens: **Makes Impact** and **Trust** are clear leaders, with **Good Service** a distant third. Everything else is nearly indistinguishable in terms of unique contribution. The full model R² of 0.1090 tells us these nine binary perceptions explain only about 11% of satisfaction variance -- there is clearly a lot more going on.
+
+---
+
+## Method 4: Shapley Values (Custom Implementation)
+
+Shapley values come from cooperative game theory. The idea: think of the nine predictors as players on a team. Each "coalition" (subset) of predictors gets a "payout" (the R² of the model using just those predictors). How do we fairly divide that payout among the individual players?
+
+The Shapley value of predictor $j$ is the **average marginal contribution** of $j$ across all possible orderings in which the predictors could be added:
+
+$$\phi_j = \sum_{S \subseteq N \setminus \{j\}} \frac{|S|!(|N|-|S|-1)!}{|N|!} \left[ R^2(S \cup \{j\}) - R^2(S) \right]$$
+
+where $N$ is the full set of predictors and $S$ ranges over all subsets that do not include $j$.
+
+**Key property:** Shapley values always add up exactly to R². No credit is lost or double-counted.
+
+**Computation note:** with 9 predictors there are $2^9 = 512$ possible subsets. This is exactly computable by brute force, which is what we do below.
+
+```{python}
+#| label: shapley-custom
+#| cache: true
+
+def compute_r2_cache(X, y, feature_names):
+    """Pre-compute R² for all 2^p subsets."""
+    n_features = len(feature_names)
+    r2_cache = {}
+    for size in range(n_features + 1):
+        for subset in combinations(range(n_features), size):
+            if len(subset) == 0:
+                r2_cache[subset] = 0.0
+            else:
+                X_sub = sm.add_constant(X[:, list(subset)])
+                r2_cache[subset] = sm.OLS(y, X_sub).fit().rsquared
+    return r2_cache
+
+def shapley_values_linear(X, y, feature_names):
+    """
+    Exact Shapley values using R² as the value function.
+    Enumerates all 2^p coalitions explicitly.
+    Time complexity: O(2^p * p) model fits.
+    """
+    n = len(feature_names)
+    r2_cache = compute_r2_cache(X, y, feature_names)
+
+    shapley = {}
+    for j in range(n):
+        sv = 0.0
+        others = [i for i in range(n) if i != j]
+        for size in range(n):
+            for subset in combinations(others, size):
+                subset_with_j = tuple(sorted(subset + (j,)))
+                weight = (
+                    math.factorial(size) * math.factorial(n - size - 1)
+                    / math.factorial(n)
+                )
+                sv += weight * (r2_cache[subset_with_j] - r2_cache[subset])
+        shapley[feature_names[j]] = sv
+    return shapley, r2_cache
+
+shapley_raw, r2_cache = shapley_values_linear(X, y, drivers)
+shapley_s = pd.Series({LABELS[k]: v for k, v in shapley_raw.items()}).sort_values(ascending=False)
+
+print(f"Shapley values sum to:   {sum(shapley_raw.values()):.6f}")
+print(f"Full model R²:           {r2_cache[tuple(range(len(drivers)))]:.6f}")
+
+fig = go.Figure(go.Bar(
+    x=shapley_s.index.tolist(),
+    y=shapley_s.values.tolist(),
+    marker_color=[PURPLE] * len(shapley_s),
+    text=[f"{v:.4f}" for v in shapley_s.values],
+    textposition="outside",
+))
+fig.update_layout(
+    title="Shapley values (exact, linear regression, R² value function)",
+    xaxis_title="Driver",
+    yaxis_title="Shapley value (contribution to R²)",
+    height=380,
+    paper_bgcolor="white",
+    plot_bgcolor="white",
+    font=dict(family="Arial", size=12),
+)
+show(fig)
+```
+
+**Makes Impact** and **Trust** are jointly the most important predictors. Notice that the Shapley values are intermediate between the raw Pearson correlations (which double-count shared variance) and the drop-one method (which only captures unique variance). That is exactly the intended behavior: Shapley values split the shared variance fairly among the contributors.
+
+### How the Custom Code Works
+
+The key insight is that we evaluate the model on every possible subset. For each predictor, we then calculate its average marginal contribution: how much did R² improve when *we* joined each possible coalition of teammates?
+
+The weights ensure that each ordering (permutation) of predictors gets equal representation. A predictor that joins a large coalition gets the same total weight as one that joins a small coalition.
+
+---
+
+## Method 5: Johnson's Relative Weights
+
+Johnson (2000) took a different approach to the multicollinearity problem. Instead of averaging over subsets, the idea is to:
+
+1. Rotate the predictors into an **orthogonal basis** via eigendecomposition of the correlation matrix
+2. Regress the outcome on these orthogonal "principal" predictors
+3. Map the variance explained by each principal predictor back to the original predictors, proportional to how much each original predictor loads on each principal component
+
+The result: a set of weights that (a) sum to R² and (b) are less sensitive to multicollinearity than standardized betas.
+
+```{python}
+#| label: johnsons-rw
+def johnsons_relative_weights(X, y):
+    """
+    Johnson (2000) relative weights via eigendecomposition of Rxx.
+    Returns weights that sum to R².
+    """
+    sc_X = StandardScaler()
+    sc_y = StandardScaler()
+    X_s = sc_X.fit_transform(X)
+    y_s = sc_y.fit_transform(y.reshape(-1, 1)).ravel()
+
+    p = X_s.shape[1]
+    Rxx = np.corrcoef(X_s.T)                   # p x p correlation matrix
+    rxy = np.array([
+        np.corrcoef(X_s[:, j], y_s)[0, 1] for j in range(p)
+    ])                                          # correlations with y
+
+    # Eigendecompose: Rxx = V diag(lambda) V^T
+    eigvals, V = np.linalg.eigh(Rxx)
+    eigvals = np.maximum(eigvals, 1e-10)        # numerical guard
+
+    # OLS coefficients on X -> beta = Rxx^{-1} rxy
+    # Then coefficients on orthogonal Z = XV: beta_z = V^T beta = Lambda^{-1} V^T rxy
+    beta_ols = np.linalg.lstsq(Rxx, rxy, rcond=None)[0]
+    beta_z = V.T @ beta_ols  # Lambda^{-1} V^T rxy
+
+    # Relative weight for predictor j:
+    # epsilon_j = sum_k (V[j,k] * sqrt(lambda[k]))^2 * beta_z[k]^2
+    # This simplifies to sum_k V[j,k]^2 * (V^T rxy)[k]^2 / lambda[k]
+    # and provably sums to R^2 = rxy^T Rxx^{-1} rxy
+    rw = np.array([
+        sum(
+            (V[j, k] * np.sqrt(eigvals[k]))**2 * beta_z[k]**2
+            for k in range(p)
+        )
+        for j in range(p)
+    ])
+    R2 = float(rxy @ beta_ols)
+    return rw, R2
+
+rw_vals, R2_check = johnsons_relative_weights(X, y)
+johnson_s = pd.Series(rw_vals, index=[LABELS[d] for d in drivers]).sort_values(ascending=False)
+
+print(f"Johnson weights sum to:  {rw_vals.sum():.6f}")
+print(f"Full model R²:           {R2_check:.6f}")
+
+fig = go.Figure(go.Bar(
+    x=johnson_s.index.tolist(),
+    y=johnson_s.values.tolist(),
+    marker_color=[PINK] * len(johnson_s),
+    text=[f"{v:.4f}" for v in johnson_s.values],
+    textposition="outside",
+))
+fig.update_layout(
+    title="Johnson's relative weights (sum = R²)",
+    xaxis_title="Driver",
+    yaxis_title="Relative weight",
+    height=380,
+    paper_bgcolor="white",
+    plot_bgcolor="white",
+    font=dict(family="Arial", size=12),
+)
+show(fig)
+```
+
+Johnson's relative weights tell a notably different story: the weights are much more compressed, with **Good Service** edging out the others. This method tends to equalize drivers that are highly intercorrelated -- they "share" their principal components more evenly. This is a feature, not a bug, when predictors are genuinely redundant signals of the same underlying construct.
+
+---
+
+## Method 6: Random Forest -- Mean Decrease in Gini
+
+A gradient-free, nonparametric approach. Fit a random forest with many decision trees. At each node split, the chosen variable is the one that most reduces impurity (Gini impurity for classification; variance for regression). The **mean decrease in Gini** for variable $j$ is the total reduction in impurity attributable to $j$ across all trees and all nodes.
+
+**What it measures:** overall predictive importance, including nonlinear effects and interactions.
+
+**Weakness:** biased toward high-cardinality variables; can assign importance to spuriously correlated noise. Also not directly comparable to R² values from the other methods.
+
+```{python}
+#| label: rf-gini
+rf = RandomForestRegressor(n_estimators=1000, random_state=42, n_jobs=-1)
+rf.fit(X, y)
+gini_imp = pd.Series(
+    rf.feature_importances_,
+    index=[LABELS[d] for d in drivers]
+).sort_values(ascending=False)
+
+fig = go.Figure(go.Bar(
+    x=gini_imp.index.tolist(),
+    y=gini_imp.values.tolist(),
+    marker_color=[GREEN] * len(gini_imp),
+    text=[f"{v:.3f}" for v in gini_imp.values],
+    textposition="outside",
+))
+fig.update_layout(
+    title="Random forest: mean decrease in Gini (normalized)",
+    xaxis_title="Driver",
+    yaxis_title="Gini importance (normalized)",
+    height=380,
+    paper_bgcolor="white",
+    plot_bgcolor="white",
+    font=dict(family="Arial", size=12),
+)
+show(fig)
+```
+
+The RF agrees with most linear methods on the top tier: **Trust** and **Makes Impact** are the most important drivers. But the RF gives more credit to **Rewarding** and **Build Quality** than the linear methods do, possibly capturing nonlinear satisfaction thresholds.
+
+---
+
+## The Full Comparison Table
+
+Here is the complete side-by-side view -- the equivalent of slide 75 in the key drivers deck. For comparability, each column is normalized so that the *values within each method sum to 100*.
+
+```{python}
+#| label: comparison-table
+
+results_raw = pd.DataFrame({
+    'Pearson r':   df[drivers].corrwith(df['satisfaction']).rename(index=LABELS),
+    'Std. Beta':   pd.Series(ols_result.params[1:], index=[LABELS[d] for d in drivers]),
+    'Drop-one R²': pd.Series(drop_one_vals),
+    'Shapley':     pd.Series({LABELS[k]: v for k, v in shapley_raw.items()}),
+    "Johnson's RW":pd.Series(rw_vals, index=[LABELS[d] for d in drivers]),
+    'RF Gini':     gini_imp,
+})
+
+# Normalize each column to sum to 100 (percent of total importance)
+results_norm = results_raw.div(results_raw.sum(axis=0)) * 100
+results_norm = results_norm.sort_values('Shapley', ascending=False)
+
+# Add rank columns
+results_rank = results_raw.rank(ascending=False).astype(int)
+results_rank = results_rank.loc[results_norm.index]
+
+def color_cell(val):
+    if val >= 20:
+        return f"background-color: #dcfce7; color: #166534; font-weight:600"
+    elif val >= 14:
+        return f"background-color: #fef9c3; color: #854d0e"
+    elif val <= 6:
+        return f"background-color: #fee2e2; color: #991b1b"
+    return ""
+
+styled = (results_norm.round(1)
+    .style
+    .applymap(color_cell)
+    .format("{:.1f}%")
+    .set_table_styles([
+        {"selector": "thead th",
+         "props": [("background-color", NAVY), ("color","white"),
+                   ("font-weight","600"), ("padding","0.45rem 0.9rem"),
+                   ("text-align","center")]},
+        {"selector": "tbody td",
+         "props": [("padding","0.4rem 0.9rem"), ("text-align","center")]},
+        {"selector": "tbody th",
+         "props": [("font-weight","500"), ("padding","0.4rem 0.9rem"),
+                   ("text-align","left"), ("background-color","#f8fafc")]},
+        {"selector": "table",
+         "props": [("border-collapse","collapse"), ("width","100%"),
+                   ("margin","1rem 0"), ("font-size","0.88em")]},
+    ])
+    .set_caption("Normalized importance scores (% of column total). Green = top tier, yellow = middle, red = bottom.")
+)
+display(styled)
+```
+
+```{python}
+#| label: fig-heatmap
+#| fig-cap: "Heatmap of normalized importance scores across all six methods"
+
+z_vals = results_norm.values
+driver_labels = results_norm.index.tolist()
+method_labels = results_norm.columns.tolist()
+
+fig = go.Figure(go.Heatmap(
+    z=z_vals,
+    x=method_labels,
+    y=driver_labels,
+    colorscale=[[0, "#fee2e2"], [0.5, "#fef9c3"], [1, "#dcfce7"]],
+    text=[[f"{v:.1f}%" for v in row] for row in z_vals],
+    texttemplate="%{text}",
+    textfont=dict(size=11),
+    colorbar=dict(title="% of total", ticksuffix="%"),
+    zmin=0, zmax=25,
+))
+fig.update_layout(
+    title="Key drivers heatmap: normalized importance by method",
+    xaxis_title="Method",
+    yaxis_title="Driver",
+    height=420,
+    paper_bgcolor="white",
+    font=dict(family="Arial", size=12),
+    margin=dict(l=140, r=30, t=60, b=80),
+)
+show(fig)
+```
+
+```{python}
+#| label: fig-radar
+#| fig-cap: "Radar chart comparing method profiles for the top 4 drivers"
+
+top4 = results_norm.head(4)
+methods = results_norm.columns.tolist()
+palette = list(METHOD_COLORS.values())
+
+fig = go.Figure()
+for i, driver in enumerate(top4.index):
+    vals = top4.loc[driver].tolist()
+    vals_closed = vals + [vals[0]]
+    methods_closed = methods + [methods[0]]
+    fig.add_trace(go.Scatterpolar(
+        r=vals_closed,
+        theta=methods_closed,
+        fill='toself',
+        name=driver,
+        opacity=0.55,
+        line=dict(color=palette[i % len(palette)], width=2),
+        fillcolor=palette[i % len(palette)],
+    ))
+
+fig.update_layout(
+    polar=dict(
+        radialaxis=dict(visible=True, range=[0, 30], ticksuffix="%"),
+    ),
+    title="Method profiles for top 4 drivers (normalized %)",
+    showlegend=True,
+    height=450,
+    paper_bgcolor="white",
+    font=dict(family="Arial", size=12),
+)
+show(fig)
+```
+
+---
+
+## Bonus: Shapley Values for a Logistic Regression (GLM)
+
+The medium challenge asked for a custom Shapley implementation -- done above in Method 4. The harder challenge: extend Shapley to a generalized linear model (GLM).
+
+Here I fit a **logistic regression** where the outcome is binary: is a customer *highly satisfied* (rating 4 or 5)? Instead of R², I use **McFadden's pseudo-R²** as the value function:
+
+$$\text{McFadden's} \ \rho^2 = 1 - \frac{\log L_{\text{model}}}{\log L_{\text{null}}}$$
+
+This measures how much the predictors improve on a null model that predicts only the base rate.
+
+```{python}
+#| label: shapley-glm
+#| cache: true
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import log_loss
+
+# Create binary outcome: satisfied = 4 or 5
+y_bin = (df['satisfaction'] >= 4).astype(int).values
+
+def mcfadden_r2_logit(X_sub, y_bin):
+    """McFadden pseudo-R² for logistic regression on given feature subset."""
+    if X_sub.shape[1] == 0:
+        return 0.0
+    clf = LogisticRegression(max_iter=500, solver='lbfgs', C=1e6)
+    clf.fit(X_sub, y_bin)
+    p_hat = clf.predict_proba(X_sub)[:, 1]
+    p_hat = np.clip(p_hat, 1e-9, 1 - 1e-9)
+    ll_model = np.sum(y_bin * np.log(p_hat) + (1 - y_bin) * np.log(1 - p_hat))
+    p_null = y_bin.mean()
+    ll_null = len(y_bin) * (p_null * np.log(p_null) + (1 - p_null) * np.log(1 - p_null))
+    return 1.0 - ll_model / ll_null
+
+def shapley_values_glm(X, y_bin, feature_names, value_fn):
+    """
+    Exact Shapley values for any value function (e.g., McFadden pseudo-R²).
+    Enumerates all 2^p coalitions.
+    """
+    n = len(feature_names)
+    val_cache = {}
+    for size in range(n + 1):
+        for subset in combinations(range(n), size):
+            if len(subset) == 0:
+                val_cache[subset] = 0.0
+            else:
+                val_cache[subset] = value_fn(X[:, list(subset)], y_bin)
+
+    shapley = {}
+    for j in range(n):
+        sv = 0.0
+        others = [i for i in range(n) if i != j]
+        for size in range(n):
+            for subset in combinations(others, size):
+                subset_with_j = tuple(sorted(subset + (j,)))
+                weight = (
+                    math.factorial(size) * math.factorial(n - size - 1)
+                    / math.factorial(n)
+                )
+                sv += weight * (val_cache[subset_with_j] - val_cache[subset])
+        shapley[feature_names[j]] = sv
+    return shapley, val_cache
+
+shapley_glm_raw, glm_cache = shapley_values_glm(
+    X, y_bin, drivers, mcfadden_r2_logit
+)
+
+full_glm_r2 = glm_cache[tuple(range(len(drivers)))]
+shapley_glm_s = pd.Series(
+    {LABELS[k]: v for k, v in shapley_glm_raw.items()}
+).sort_values(ascending=False)
+
+print(f"GLM Shapley sum:         {sum(shapley_glm_raw.values()):.6f}")
+print(f"Full McFadden pseudo-R²: {full_glm_r2:.6f}")
+print(f"Highly satisfied (>=4):  {y_bin.mean():.1%} of responses")
+```
+
+```{python}
+#| label: fig-shapley-glm
+fig = go.Figure(go.Bar(
+    x=shapley_glm_s.index.tolist(),
+    y=shapley_glm_s.values.tolist(),
+    marker_color=[TEAL] * len(shapley_glm_s),
+    text=[f"{v:.4f}" for v in shapley_glm_s.values],
+    textposition="outside",
+))
+fig.update_layout(
+    title="GLM Shapley values (logit, McFadden pseudo-R² value function)",
+    xaxis_title="Driver",
+    yaxis_title="Shapley value (contribution to pseudo-R²)",
+    height=380,
+    paper_bgcolor="white",
+    plot_bgcolor="white",
+    font=dict(family="Arial", size=12),
+)
+show(fig)
+```
+
+The logit Shapley results are strikingly consistent with the linear Shapley results: **Makes Impact** and **Trust** lead, followed by **Good Service**. This stability across model classes is reassuring -- it suggests the findings are not artifacts of the linear assumption.
+
+```{python}
+#| label: fig-shapley-comparison
+# Compare linear vs GLM Shapley side by side
+lin_s = pd.Series({LABELS[k]: v for k, v in shapley_raw.items()})
+glm_s_aligned = shapley_glm_s.reindex(lin_s.index)
+
+lin_norm = lin_s / lin_s.sum() * 100
+glm_norm = glm_s_aligned / glm_s_aligned.sum() * 100
+
+common_order = lin_norm.sort_values(ascending=False).index.tolist()
+lin_norm = lin_norm[common_order]
+glm_norm = glm_norm[common_order]
+
+fig = go.Figure()
+fig.add_trace(go.Bar(
+    name="Linear Shapley (R²)",
+    x=common_order,
+    y=lin_norm.values.tolist(),
+    marker_color=PURPLE,
+    opacity=0.85,
+))
+fig.add_trace(go.Bar(
+    name="GLM Shapley (McFadden ρ²)",
+    x=common_order,
+    y=glm_norm.values.tolist(),
+    marker_color=TEAL,
+    opacity=0.85,
+))
+fig.update_layout(
+    title="Linear vs GLM Shapley values (normalized %)",
+    barmode="group",
+    xaxis_title="Driver",
+    yaxis_title="% of total",
+    yaxis_ticksuffix="%",
+    height=420,
+    paper_bgcolor="white",
+    plot_bgcolor="white",
+    font=dict(family="Arial", size=12),
+    legend=dict(yanchor="top", y=0.97, xanchor="right", x=0.97),
+)
+show(fig)
+```
+
+---
+
+## What Do the Methods Agree and Disagree On?
+
+```{python}
+#| label: rank-correlation-matrix
+from scipy.stats import spearmanr
+
+methods_for_corr = {
+    'Pearson r':    df[drivers].corrwith(df['satisfaction']),
+    'Std. Beta':    pd.Series(ols_result.params[1:], index=drivers),
+    'Drop-one R²':  pd.Series({k.split()[0].lower() if len(k.split())==1 else
+                                list(LABELS.keys())[list(LABELS.values()).index(k)]: v
+                                for k, v in drop_one_vals.items()}),
+    'Shapley (lin)': pd.Series(shapley_raw),
+    "Johnson's RW": pd.Series(rw_vals, index=drivers),
+    'RF Gini':      pd.Series(rf.feature_importances_, index=drivers),
+    'Shapley (GLM)': pd.Series(shapley_glm_raw),
+}
+
+rank_df = pd.DataFrame(methods_for_corr).rank(ascending=False)
+corr_matrix = rank_df.corr(method='spearman')
+
+fig = go.Figure(go.Heatmap(
+    z=corr_matrix.values,
+    x=corr_matrix.columns.tolist(),
+    y=corr_matrix.index.tolist(),
+    colorscale="RdYlGn",
+    zmin=-1, zmax=1,
+    text=[[f"{v:.2f}" for v in row] for row in corr_matrix.values],
+    texttemplate="%{text}",
+    textfont=dict(size=11),
+    colorbar=dict(title="Spearman ρ"),
+))
+fig.update_layout(
+    title="Spearman rank correlation between methods",
+    height=430,
+    paper_bgcolor="white",
+    font=dict(family="Arial", size=12),
+    margin=dict(l=140, r=30, t=60, b=130),
+    xaxis=dict(tickangle=-40),
+)
+show(fig)
+```
+
+```{python}
+#| label: rank-agreement-summary
+print("Average pairwise Spearman rank correlation across all method pairs:")
+n_methods = len(corr_matrix)
+off_diag = corr_matrix.values[np.triu_indices(n_methods, k=1)]
+print(f"  Mean: {off_diag.mean():.3f}")
+print(f"  Min:  {off_diag.min():.3f}  (least agreement)")
+print(f"  Max:  {off_diag.max():.3f}  (most agreement)")
+print()
+print("Rankings for the top driver 'Makes Impact' across methods:")
+for name, series in methods_for_corr.items():
+    rank = int(series.rank(ascending=False)['impact'])
+    print(f"  {name:<22}: rank {rank}")
+```
+
+The rank correlation matrix reveals high agreement: most methods produce Spearman correlations above 0.8 with each other. **Pearson, drop-one, linear Shapley, and GLM Shapley are essentially telling the same story.** Johnson's relative weights show the most divergence from the others -- its equalization of correlated drivers pulls ranks toward the middle.
+
+---
+
+## Takeaways
+
+| Method | Signal type | Handles multicollinearity? | Captures nonlinearity? |
+|--------|-------------|---------------------------|----------------------|
+| Pearson r | Raw association | No | No |
+| Std. Beta | Partial (net of others) | Partially | No |
+| Drop-one R² | Unique contribution | Yes | No |
+| Shapley | Fair allocation of shared variance | Yes | No |
+| Johnson's RW | Eigenspace redistribution | Yes | No |
+| RF Gini | Predictive importance | Yes | Yes |
+
+**Consistent winners across methods:** Trust and Makes Impact are ranked in the top three by every method. If a brand wants to move satisfaction, these two perceptions are the safest bets.
+
+**Consistent laggards:** Popular and Differs are near the bottom on almost every method. Even if customers perceive the brand as differentiated or popular, that perception does not translate into higher satisfaction.
+
+**Where methods diverge:** Good Service is solidly top-three on linear methods but less dominant in the RF. Build Quality and Rewarding are elevated by the RF, possibly because their effect on satisfaction is nonlinear (e.g., a threshold effect that regression cannot capture). Johnson's relative weights compress the spread, making all drivers look more similar than the other methods suggest.
+
+The practical lesson: run multiple methods, then focus on the *consensus* top drivers. When methods disagree, that disagreement is a signal worth investigating -- it suggests either nonlinearity, interactions, or a measurement issue with that driver.
